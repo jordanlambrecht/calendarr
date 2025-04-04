@@ -8,7 +8,7 @@ A simple Docker container that fetches upcoming airings/releases for TV shows an
 
 - Combines multiple Sonarr and Radarr calendar feeds
 - Groups shows and movies by day of the week
-- Highlights season premieres with a party hat emoji 🎉
+- Highlights season premieres with a party emoji 🎉
 - Runs on a customizable schedule (default: every Monday at 9 AM)
 
 ## 🚀 Usage
@@ -61,7 +61,16 @@ docker run -d \
 
 ## 🤝 Obtaining Calendar URLs
 
+![Sonarr Calendar Options](https://github.com/jordanlambrecht/calendarr/blob/main/public/calendarr_sonarr_feed.png)
+
 ### Sonarr
+
+1. Go to Calendar > iCal Link
+2. Leave all three checkboxes blank
+3. Optionally set tags for shows you want to announce
+4. Copy the ical link
+
+Alternatively: 
 
 1. Go to Settings > General
 2. Under "Security" section, look for "API Key"
@@ -69,6 +78,13 @@ docker run -d \
 4. Your calendar URL will be: `http://your-sonarr-url/feed/v3/calendar/Sonarr.ics?apikey=YOUR_API_KEY`
 
 ### Radarr
+
+1. Go to Calendar > iCal Link
+2. Leave all three checkboxes blank
+3. Optionally set tags for movies you want to announce
+4. Copy the ical link
+
+Alternatively: 
 
 1. Go to Settings > General
 2. Under "Security" section, look for "API Key"
