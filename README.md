@@ -13,6 +13,8 @@ A simple Docker container that fetches upcoming airings/releases for TV shows an
 
 ## 🚀 Usage
 
+Images available via either `ghcr.io/jordanlambrecht/calendarr:latest` or `jordyjordyjordy/calendar-to-discord:latest`
+
 ### With Docker Compose (Recommended)
 
 1. In Discord, right click channel you want to add the script to -> Edit Channel -> Integrations, Webhooks -> New Webhook -> Copy Webhook URL
@@ -103,4 +105,4 @@ docker build -t calendarr .
 
 ## 🧑‍⚖️ License
 
-MIT License
+GNU GENERAL PUBLIC LICENSE

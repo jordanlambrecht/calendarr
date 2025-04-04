@@ -1,0 +1,11 @@
+.env
+.DS_STORE
+.venv
+logs
+**/*.pyc
+__pycache__
+**/.venv
+**/.venv/**
+**/.venv/
+.venv/*
+.venv/**

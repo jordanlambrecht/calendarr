@@ -1,0 +1,30 @@
+
+
+services:
+ calendarr:
+    build: .
+    restart: "no"
+    container_name: calendarr
+    environment:
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      # type must be "tv" or "movie"
+      CALENDAR_URLS: >
+        [{
+          "url":"${ICS_URL_SONARR_1}",
+          "type":"tv"
+        },
+        {
+          "url":"${ICS_URL_RADARR_1}",
+          "type":"movie"
+        },
+        {
+          "url":"${ICS_URL_SONARR_2}",
+          "type":"tv"
+        }]
+      CUSTOM_HEADER: JordyTV Guide - Shows and Movies airing this week
+      SHOW_DATE_RANGE: true
+      START_WEEK_ON_MONDAY: true
+      RUN_ON_STARTUP: true
+      CRON_SCHEDULE: 0 9 * * 1 # Run every Monday at 9 AM
+    volumes:
+      - ./calendarr/logs:/app/logs:rw
