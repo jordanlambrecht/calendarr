@@ -2,7 +2,7 @@
 
 A simple Docker container that fetches upcoming airings/releases for TV shows and movies from Sonarr and Radarr calendars and posts them to Discord on a schedule.
 
-![Example Discord post](https://i.imgur.com/example.png)
+![Example Discord post](https://github.com/jordanlambrecht/arr-calendar-to-discord/blob/main/public/calendarr_example_output_v2.png)
 
 ## ✨ Features
 
@@ -59,7 +59,7 @@ docker run -d \
 | `RUN_ON_STARTUP` | Boolean | Also run immediately once when container starts (Default: true) |
 | `CRON_SCHEDULE` | Boolean | Cron schedule expression (default: "0 9 * * 1" - Monday 9am) [Generating Cron Schedule Expressions](https://crontab.guru/) |
 
-## Obtaining Calendar URLs
+## 🤝 Obtaining Calendar URLs
 
 ### Sonarr
 
@@ -75,7 +75,7 @@ docker run -d \
 3. Copy the API key
 4. Your calendar URL will be: `http://your-radarr-url/feed/v3/calendar/Radarr.ics?apikey=YOUR_API_KEY`
 
-## Development
+## 🚧 Development
 
 If you want to build the container yourself:
 
@@ -85,6 +85,6 @@ cd calendar-to-discord
 docker build -t calendarr .
 ```
 
-## License
+## 🧑‍⚖️ License
 
 MIT License
