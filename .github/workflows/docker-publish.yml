@@ -42,7 +42,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/calendar-to-discord
+            ${{ secrets.DOCKERHUB_USERNAME }}/calendarr
             ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}

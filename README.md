@@ -2,7 +2,7 @@
 
 A simple Docker container that fetches upcoming airings/releases for TV shows and movies from Sonarr and Radarr calendars and posts them to Discord on a schedule.
 
-![Example Discord post](https://github.com/jordanlambrecht/arr-calendar-to-discord/blob/main/public/calendarr_example_output_v2.png)
+![Example Discord post](https://github.com/jordanlambrecht/calendarr/blob/main/public/calendarr_example_output_v2.png)
 
 ## ✨ Features
 
@@ -13,7 +13,7 @@ A simple Docker container that fetches upcoming airings/releases for TV shows an
 
 ## 🚀 Usage
 
-Images available via either `ghcr.io/jordanlambrecht/calendarr:latest` or `jordyjordyjordy/calendar-to-discord:latest`
+Images available via either `ghcr.io/jordanlambrecht/calendarr:latest` or `jordyjordyjordy/calendarr:latest`
 
 ### With Docker Compose (Recommended)
 
@@ -99,7 +99,7 @@ If you want to build the container yourself:
 
 ```bash
 git clone https://github.com/jordanlambrecht/calendarr.git
-cd calendar-to-discord
+cd calendarr
 docker build -t calendarr .
 ```
 
