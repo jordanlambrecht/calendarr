@@ -54,6 +54,9 @@ docker run -d \
 | Environment Variable | Type | Description |
 |---------------------|-------------|-------|
 | `DISCORD_WEBHOOK_URL` | String | *Required* Discord webhook URL |
+| `SLACK_WEBHOOK_URL` | Slack incoming webhook URL | Required for Slack integration |
+| `USE_SLACK` | Enable Slack integration | Default: false |
+| `USE_DISCORD` | Enable Discord integration | Default: true |
 | `CALENDAR_URLS` | JSON Array | *Required* Array of calendar URLs and their types (tv/movie)|
 | `CUSTOM_HEADER` | String | Custom title for the Discord message (default: "TV Guide") |
 | `SHOW_DATE_RANGE` | Boolean | Show date range in header (Default: true) |
@@ -92,6 +95,28 @@ Alternatively:
 2. Under "Security" section, look for "API Key"
 3. Copy the API key
 4. Your calendar URL will be: `http://your-radarr-url/feed/v3/calendar/Radarr.ics?apikey=YOUR_API_KEY`
+
+## Slack Webhooks
+
+
+
+## Slack App Setup
+
+More info [here](https://api.slack.com/messaging/webhooks) on how to obtain a slack webhook URL if you get lost.
+
+You can set up the Slack app using the provided manifest file:
+
+1. Go to [https://api.slack.com/apps](https://api.slack.com/apps)
+2. Click "Create New App" and select "From an app manifest"
+3. Select your workspace and click "Next"
+4. Copy and paste the contents of the `slack-manifest.yaml` file from this repository
+5. Click "Next" and then "Create"
+6. Once created, navigate to "Incoming Webhooks" in the sidebar
+7. Toggle "Activate Incoming Webhooks" to On
+8. Click "Add New Webhook to Workspace"
+9. Select the channel where you want to receive updates
+10. Copy the Webhook URL provided and use it as your `SLACK_WEBHOOK_URL` environment variable
+
 
 ## 🚧 Development
 

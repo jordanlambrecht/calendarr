@@ -1,5 +1,8 @@
-
-
+---
+name: calendarr
+# ╔══════════════════════════════════════╗
+# ║               SERVICES               ║
+# ╚══════════════════════════════════════╝
 services:
  calendarr:
     image: jordyjordyjordy/calendarr:latest
@@ -7,7 +10,10 @@ services:
     restart: "no"
     container_name: calendarr
     environment:
+      USE_DISCORD: "false"
+      USE_SLACK: "true"
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
       # type must be "tv" or "movie"
       CALENDAR_URLS: >
         [{

@@ -1,0 +1,21 @@
+display_information:
+  name: Calendarr
+  description: Sends TV and movie schedules from Sonarr/Radarr to Slack
+  background_color: "#2C2D30"
+
+features:
+  bot_user:
+    display_name: Calendarr Bot
+    always_online: false
+
+oauth_config:
+  scopes:
+    bot:
+      - incoming-webhook
+      - chat:write
+      - chat:write.public
+
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

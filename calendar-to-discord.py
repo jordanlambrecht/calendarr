@@ -7,7 +7,11 @@ import os
 import json
 import re
 
-def get_events_for_week(ical_urls, start_week_on_monday=True):
+# PREMIERE_PATTERN = r'[-\s](?:s\d+e01|(?:\d+x01))\b'
+PREMIERE_PATTERN = r'[-\s](?:s\d+e0*1|(?:\d+x0*1))\b'
+MAX_DISCORD_EMBEDS_PER_REQUEST = 10
+
+def get_events_for_week(ical_urls: list[dict], start_week_on_monday: bool = True) -> tuple:
     # Use today's date
     base_date = datetime.date.today()
     
@@ -64,7 +68,7 @@ def get_events_for_week(ical_urls, start_week_on_monday=True):
     
     return all_events, start_of_week, end_of_week
 
-def create_show_embeds(events, start_date, end_date):
+def create_discord_show_embeds(events, start_date, end_date):
     if not events:
         return [], 0, 0
     
@@ -96,7 +100,7 @@ def create_show_embeds(events, start_date, end_date):
         # Process TV show titles - separate show name from episode info
         if source_type == "tv":
             # Check for pattern like "Show Name - 1x01" or "Show Name - S01E01" 
-            if re.search(r'[-\s](?:s\d+e01|(?:\d+x01))\b', summary.lower()):
+            if re.search(PREMIERE_PATTERN, summary, re.IGNORECASE):
                 is_premiere = True
             
             # Split show name from episode details if possible
@@ -187,6 +191,128 @@ def create_show_embeds(events, start_date, end_date):
     
     return embeds, tv_count, movie_count
 
+def format_for_slack(embeds, tv_count, movie_count, start_date, end_date, custom_header, show_date_range):
+    """
+    Format show data for Slack, separate from the sending mechanism
+    """
+    # Handle pluralization
+    shows_text = "episode" if tv_count == 1 else "episodes"
+    movies_text = "movie" if movie_count == 1 else "movies"
+    
+    # Create header text
+    header_text = custom_header
+    if show_date_range:
+        header_text += f" ({start_date.strftime('%b %d')} - {end_date.strftime('%b %d')})"
+    
+    # Day colors (ROYGBIV)
+    day_colors = {
+        "Monday": "#E53935",    # Red
+        "Tuesday": "#FB8C00",   # Orange
+        "Wednesday": "#FFD600", # Yellow
+        "Thursday": "#43A047",  # Green
+        "Friday": "#1E88E5",    # Blue
+        "Saturday": "#5E35B1",  # Indigo
+        "Sunday": "#8E24AA"     # Violet
+    }
+    
+    # Format the header message
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": header_text
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"{tv_count} all new {shows_text} and {movie_count} {movies_text}"
+            }
+        }
+    ]
+    
+    # Create attachments for each day
+    attachments = []
+    
+    for embed in embeds:
+        day_title = embed["title"]
+        day_content = embed["description"]
+        day_name = day_title.split(',')[0]
+        color = day_colors.get(day_name, "#000000")
+        
+        # Fix episode title formatting - only show names should be bold
+        content = day_content
+        # Process each line to ensure only show names are bold
+        formatted_lines = []
+        for line in content.split('\n'):
+            if line.startswith("**MOVIES"):
+                formatted_lines.append(line.replace("**", "*"))
+                continue
+                
+            # For TV shows with time
+            if ":" in line and "**" in line:
+                parts = line.split(":", 1)
+                time_part = parts[0] + ":"
+                content_part = parts[1].strip()
+                
+                # Extract the show name while preserving bold
+                if " - " in content_part:
+                    show_and_episode = content_part.split(" - ", 1)
+                    show_name = show_and_episode[0]
+                    episode_info = " - " + show_and_episode[1]
+                    # Make sure only show name is bold in Slack
+                    if "**" in show_name:
+                        show_name = show_name.replace("**", "*")
+                    formatted_line = f"{time_part} {show_name}{episode_info}"
+                else:
+                    # If no dash separator, just convert all bold markers
+                    formatted_line = line.replace("**", "*")
+                
+                formatted_lines.append(formatted_line)
+            else:
+                # For lines without time or special format
+                formatted_lines.append(line.replace("**", "*"))
+        
+        content = "\n".join(formatted_lines)
+        
+        # Create the attachment
+        attachment = {
+            "color": color,
+            "title": day_title,
+            "text": content,
+            "mrkdwn_in": ["text"]
+        }
+        
+        attachments.append(attachment)
+    
+    return blocks, attachments
+
+def send_to_slack(webhook_url, embeds, tv_count, movie_count, start_date, end_date, custom_header, show_date_range):
+    """
+    Send formatted message to Slack
+    """
+    # Format content for Slack
+    blocks, attachments = format_for_slack(embeds, tv_count, movie_count, 
+                                          start_date, end_date, custom_header, 
+                                          show_date_range)
+    
+    # Create the payload with blocks and attachments
+    payload = {
+        "blocks": blocks,
+        "attachments": attachments
+    }
+    
+    # Send to Slack
+    try:
+        response = requests.post(webhook_url, json=payload)
+        print(f"Slack post status code: {response.status_code}")
+        return response.status_code in [200, 201, 204]
+    except Exception as e:
+        print(f"Error sending to Slack: {e}")
+        return False
+    
 def send_to_discord(webhook_url, embeds, tv_count, movie_count, start_date, end_date, custom_header="TV Guide", show_date_range=True):
     # Handle pluralization
     shows_text = "episode" if tv_count == 1 else "episodes"
@@ -210,9 +336,11 @@ def send_to_discord(webhook_url, embeds, tv_count, movie_count, start_date, end_
         print(f"Header status code: {response.status_code}")
     except Exception as e:
         print(f"Error sending header to Discord: {e}")
+        return False
     
     # Group embeds into batches of 10 (Discord limit)
-    embed_batches = [embeds[i:i+10] for i in range(0, len(embeds), 10)]
+    # embed_batches = [embeds[i:i+10] for i in range(0, len(embeds), 10)]
+    embed_batches = [embeds[i:i+MAX_DISCORD_EMBEDS_PER_REQUEST] for i in range(0, len(embeds), MAX_DISCORD_EMBEDS_PER_REQUEST)]
     
     success_count = 0
     for batch in embed_batches:
@@ -232,11 +360,24 @@ def send_to_discord(webhook_url, embeds, tv_count, movie_count, start_date, end_
 
 def main():
     print("Starting Calendar to Discord script")
-    
-    # Get webhook URL from environment variables
-    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
-    if not webhook_url:
-        print("Error: DISCORD_WEBHOOK_URL environment variable not set")
+
+    # Get webhook configurations
+    discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+    slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
+    use_discord = os.environ.get("USE_DISCORD", "true").lower() == "true"
+    use_slack = os.environ.get("USE_SLACK", "false").lower() == "true"
+
+    # Validate webhook configuration
+    if not use_discord and not use_slack:
+        print("Error: At least one messaging platform must be enabled")
+        sys.exit(1)
+
+    if use_discord and not discord_webhook_url:
+        print("Error: DISCORD_WEBHOOK_URL is required when USE_DISCORD is true")
+        sys.exit(1)
+        
+    if use_slack and not slack_webhook_url:
+        print("Error: SLACK_WEBHOOK_URL is required when USE_SLACK is true")
         sys.exit(1)
     
     # Get calendar URLs from environment variables
@@ -249,7 +390,7 @@ def main():
     custom_header = os.environ.get("CUSTOM_HEADER", "TV Guide")
     show_date_range = os.environ.get("SHOW_DATE_RANGE", "true").lower() == "true"
     start_week_on_monday = os.environ.get("START_WEEK_ON_MONDAY", "true").lower() == "true"
-    # cron_schedule = os.environ.get("CRON_SCHEDULE", "0 9 * * 1")  # Default: Monday at 9 AM
+
     
     try:
         calendar_urls = json.loads(calendar_urls_json)
@@ -267,15 +408,23 @@ def main():
         events_count = len(events)
         print(f"Found {events_count} events")
         
-        # Create embeds for shows
+        # Create Discord embeds for shows
         print("Creating embeds for events")
-        embeds, tv_count, movie_count = create_show_embeds(events, start_date, end_date)
-        
-        # Send to Discord
-        print(f"Sending {len(embeds)} day embeds to Discord")
-        success_count = send_to_discord(webhook_url, embeds, tv_count, movie_count, 
+        embeds, tv_count, movie_count = create_discord_show_embeds(events, start_date, end_date)
+            
+        # Send to Discord if enabled
+        if use_discord:
+            print(f"Sending {len(embeds)} day embeds to Discord")
+            discord_success = send_to_discord(discord_webhook_url, embeds, tv_count, movie_count, 
+                                            start_date, end_date, custom_header, show_date_range)
+            print(f"Successfully sent to Discord: {discord_success}")
+
+        # Send to Slack if enabled
+        if use_slack and slack_webhook_url:
+            print(f"Sending to Slack")
+            slack_success = send_to_slack(slack_webhook_url, embeds, tv_count, movie_count, 
                                         start_date, end_date, custom_header, show_date_range)
-        print(f"Successfully sent {success_count} messages")
+            print(f"Successfully sent to Slack: {slack_success}")
         
         # Explicitly exit
         print("Script completed successfully")
