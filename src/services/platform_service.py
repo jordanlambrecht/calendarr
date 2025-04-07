@@ -43,7 +43,8 @@ class PlatformService:
             platforms[PLATFORM_DISCORD] = DiscordPlatform(
                 self.config.discord_webhook_url,
                 self.webhook_service,
-                DISCORD_SUCCESS_CODES
+                DISCORD_SUCCESS_CODES,
+                self.config
             )
             
         if self.config.use_slack and self.config.slack_webhook_url:

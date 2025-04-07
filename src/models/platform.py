@@ -7,6 +7,7 @@ from datetime import datetime
 import logging
 
 from models.day import Day
+from config.settings import Config
 from utils.format_utils import (
     format_header_text, format_subheader_text, get_day_colors, join_content_parts,
     build_content_summary_parts
@@ -101,6 +102,12 @@ class Platform(ABC):
 class DiscordPlatform(Platform):
     """Discord implementation of Platform"""
     
+    def __init__(self, webhook_url: str, webhook_service: WebhookService, 
+                 success_codes: List[int], config: Config):
+        """Initialize with configuration"""
+        super().__init__(webhook_url, webhook_service, success_codes)
+        self.config = config
+        
     def _initialize_day_colors(self) -> Dict[str, int]:
         """
         Initialize color scheme for days
@@ -160,9 +167,15 @@ class DiscordPlatform(Platform):
         # Create header with formatted date
         header_text = format_header_text(custom_header, start_date, end_date, show_date_range)
         subheader = format_subheader_text(tv_count, movie_count, premiere_count)
+
+        mention_text = ""
+        if hasattr(self, 'config') and self.config.discord_mention_role_id:
+            role_id = self.config.discord_mention_role_id
+            mention_text = f"\n\n<@&{role_id}> "
+    
         
         return {
-            "content": f"{header_text}\n\n{subheader}"
+            "content": f"{header_text}\n\n{subheader}{mention_text}"
         }
 
 

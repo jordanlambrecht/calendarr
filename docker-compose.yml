@@ -6,8 +6,8 @@ name: calendarr
 # ╚══════════════════════════════════════╝
 services:
  calendarr:
-    image: docker pull ghcr.io/jordanlambrecht/calendarr:latest
-    # build: .
+    # image: ghcr.io/jordanlambrecht/calendarr:latest
+    build: .
     restart: "unless-stopped"
     container_name: calendarr
     environment:
@@ -36,7 +36,7 @@ services:
       DEBUG: false
       START_WEEK_ON_MONDAY: true
       TZ: "America/Chicago"
-      # RUN_TIME AND SCHEDULE_TYPE
+      MENTION_ROLE_ID: ${MENTION_ROLE_ID}
       RUN_TIME: "09:30"  # Time in HH:MM format (24-hour)
       RUN_ON_STARTUP: true
       SCHEDULE_TYPE: "WEEKLY"  # DAILY or WEEKLY

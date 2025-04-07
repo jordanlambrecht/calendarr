@@ -219,6 +219,9 @@ class Config:
     custom_header: str = DEFAULT_HEADER
     show_date_range: bool = True
     start_week_on_monday: bool = True
+
+    # Discord-specific settings
+    discord_mention_role_id: Optional[str] = None
     
     # Calendar settings
     calendar_urls: List[CalendarUrl] = field(default_factory=list)
@@ -595,14 +598,16 @@ def load_config_from_env() -> Config:
             slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
             use_discord = get_env_bool("USE_DISCORD", True)
             use_slack = get_env_bool("USE_SLACK", False)
-            
+            discord_mention_role_id=os.environ.get("MENTION_ROLE_ID")
             logger.debug(f"📋  Discord enabled: {use_discord}, webhook configured: {'yes' if discord_webhook_url else 'no'}")
             logger.debug(f"📋  Slack enabled: {use_slack}, webhook configured: {'yes' if slack_webhook_url else 'no'}")
+            logger.debug(f"📋  Discord mention role: {discord_mention_role_id}")
         except Exception as e:
             logger.error(f"Error loading webhook settings: {e}")
             logger.debug(f"❌  Exception details: {traceback.format_exc()}")
             discord_webhook_url = None
             slack_webhook_url = None
+            discord_mention_role_id = None
             use_discord = True
             use_slack = False
         
@@ -654,6 +659,7 @@ def load_config_from_env() -> Config:
                 slack_webhook_url=slack_webhook_url,
                 use_discord=use_discord,
                 use_slack=use_slack,
+                discord_mention_role_id=discord_mention_role_id,
                 custom_header=custom_header,
                 show_date_range=show_date_range,
                 start_week_on_monday=start_week_on_monday,
