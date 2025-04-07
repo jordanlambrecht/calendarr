@@ -53,6 +53,7 @@ docker run -d \
 
 | Environment Variable | Type | Description |
 |---------------------|-------------|-------|
+| `TZ` | Timezone for displaying show times | Uses tzdata names (e.g., "America/New_York", "Europe/London", "America/Los_Angeles") - Default: America/Chicago |
 | `DISCORD_WEBHOOK_URL` | String | *Required* Discord webhook URL |
 | `SLACK_WEBHOOK_URL` | Slack incoming webhook URL | Required for Slack integration |
 | `USE_SLACK` | Enable Slack integration | Default: false |
@@ -63,6 +64,19 @@ docker run -d \
 | `START_WEEK_ON_MONDAY` | Boolean | Whether the week should start on Monday (Default: true) |
 | `RUN_ON_STARTUP` | Boolean | Also run immediately once when container starts (Default: true) |
 | `CRON_SCHEDULE` | Boolean | Cron schedule expression (default: "0 9 * * 1" - Monday 9am) [Generating Cron Schedule Expressions](https://crontab.guru/) |
+
+## Schedule Configuration
+
+Set when and how often the calendar runs:
+
+- `RUN_TIME`: When to run each day (format: HH:MM in 24-hour time, e.g., "09:30")
+- `SCHEDULE_TYPE`: Either "DAILY" or "WEEKLY"
+- `SCHEDULE_DAY`: Day of week (0=Sunday, 1=Monday, etc.) - only used for weekly schedules
+- `CALENDAR_RANGE`: "AUTO", "DAY", or "WEEK" - controls how many days of events to show
+
+For backward compatibility, you can also use:
+- `SCHEDULE_TIME`: Same as RUN_TIME
+- `CRON_SCHEDULE`: For direct cron expressions (overrides all other schedule settings)
 
 ## 🤝 Obtaining Calendar URLs
 

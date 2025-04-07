@@ -5,15 +5,18 @@ name: calendarr
 # ╚══════════════════════════════════════╝
 services:
  calendarr:
-    image: jordyjordyjordy/calendarr:latest
-    # build: .
-    restart: "no"
+    # image: jordyjordyjordy/calendarr:latest
+    build: .
+    restart: "unless-stopped"
     container_name: calendarr
     environment:
-      USE_DISCORD: "false"
+      USE_DISCORD: "true"
+     
       USE_SLACK: "true"
-      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      USE_24_HOUR: "true"
+      DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/1234211881754038404/3m-0xa1G4-xmAfDZshBRzPp1iwbuUC6xQabBRxvR6qBF6WZ85rrp1UxjiTrHMNtRC8Z0"
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
+      DISPLAY_TIME: "true"
       # type must be "tv" or "movie"
       CALENDAR_URLS: >
         [{
@@ -30,8 +33,20 @@ services:
         }]
       CUSTOM_HEADER: TV Guide - Shows and Movies airing this week
       SHOW_DATE_RANGE: true
+      DEBUG: true
       START_WEEK_ON_MONDAY: true
+      TZ: "America/Chicago"
+      # RUN_TIME AND SCHEDULE_TYPE
+      RUN_TIME: "09:30"  # Time in HH:MM format (24-hour)
       RUN_ON_STARTUP: true
-      CRON_SCHEDULE: 0 9 * * 1 # Run every Monday at 9 AM
+      SCHEDULE_TYPE: "WEEKLY"  # DAILY or WEEKLY
+      CALENDAR_RANGE: "AUTO"   # AUTO, DAY, or WEEK
+      PASSED_EVENT_HANDLING: "HIDE"    # DISPLAY, HIDE, or STRIKE
     volumes:
       - ./calendarr/logs:/app/logs:rw
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

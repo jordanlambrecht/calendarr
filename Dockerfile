@@ -3,21 +3,20 @@ FROM python:3.9-slim
 WORKDIR /app
 
 LABEL org.opencontainers.image.source=https://github.com/jordanlambrecht/calendarr
-LABEL org.opencontainers.image.description="Calendar feeds from Sonarr/Radarr to Discord"
+LABEL org.opencontainers.image.description="Calendar feeds from Sonarr/Radarr to Discord and Slack"
 LABEL org.opencontainers.image.licenses=GPL-3.0
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY calendar-to-discord.py .
+# Copy application files
+# COPY *.py /app/
+COPY src/ /app/
 
-# Install cron
-RUN apt-get update && apt-get install -y cron
+RUN mkdir -p /app/logs
 
-# Create log directory
-RUN mkdir -p /app/logs && touch /app/cron.log
+ENV PYTHONUNBUFFERED=1
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+EXPOSE 5000
+# Set the command that runs when the container starts
+CMD ["python", "app.py"]
