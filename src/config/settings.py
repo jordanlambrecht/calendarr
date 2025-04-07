@@ -25,7 +25,7 @@ DEFAULT_SCHEDULE_DAY = "1"  # Monday
 
 # Logging settings default
 DEFAULT_LOG_DIR = "/app/logs"
-DEFAULT_LOG_FILE = "calendar.log"
+DEFAULT_LOG_FILE = "calendarr.log"
 DEFAULT_LOG_BACKUP_COUNT = 15
 DEFAULT_LOG_MAX_SIZE_MB = 1
 

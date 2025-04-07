@@ -1,27 +1,71 @@
 #!/usr/bin/env python3
+# src/utils/format_utils.py
 
-from constants import NO_NEW_RELEASES_MSG
+from typing import Dict, List
+from constants import NO_NEW_RELEASES_MSG, COLOR_PALETTE
+
+from utils.date_utils import get_days_order
+
 
 def pluralize(word: str, count: int, plural: str = None) -> str:
-    """Return singular or plural form based on count"""
+    """
+    Return singular or plural form based on count
+    
+    Args:
+        word: Singular form
+        count: Count to determine plurality
+        plural: Optional custom plural form
+        
+    Returns:
+        Appropriate form based on count
+    """
     if plural is None:
         plural = word + "s"
     return word if count == 1 else plural
 
-def apply_formatting(text, format_type, platform):
-  """Apply platform-specific formatting"""
-  if format_type == "strikethrough":
-      return f"~~{text}~~" if platform == "discord" else f"~{text}~"
-  elif format_type == "bold":
-      return f"**{text}**" if platform == "discord" else f"*{text}*"
-  return text
 
-def process_movie_event(summary):
-    """Format movie event for display"""
+def apply_formatting(text: str, format_type: str, platform: str) -> str:
+    """
+    Apply platform-specific formatting
+    
+    Args:
+        text: Text to format
+        format_type: Type of formatting to apply
+        platform: Platform name
+        
+    Returns:
+        Formatted text
+    """
+    if format_type == "strikethrough":
+        return f"~~{text}~~" if platform == "discord" else f"~{text}~"
+    elif format_type == "bold":
+        return f"**{text}**" if platform == "discord" else f"*{text}*"
+    return text
+
+
+def process_movie_event(summary: str) -> str:
+    """
+    Format movie event for display
+    
+    Args:
+        summary: Movie title
+        
+    Returns:
+        Formatted movie string
+    """
     return f"🎬  **{summary}**"
 
-def count_premieres(days_data):
-    """Count the number of season premieres in the data"""
+
+def count_premieres(days_data: Dict) -> int:
+    """
+    Count the number of season premieres in the data
+    
+    Args:
+        days_data: Dictionary of days with events
+        
+    Returns:
+        Number of premieres
+    """
     premiere_count = 0
     for day_content in days_data.values():
         for tv_item in day_content["tv"]:
@@ -29,15 +73,9 @@ def count_premieres(days_data):
                 premiere_count += 1
     return premiere_count
 
-def count_events_by_type(events):
-    """Count TV episodes and movies in events"""
-    tv_count = sum(1 for e in events if e.get("SOURCE_TYPE") == "tv")
-    movie_count = sum(1 for e in events if e.get("SOURCE_TYPE") == "movie")
-    
-    return tv_count, movie_count
 
-
-def build_content_summary_parts(tv_count, movie_count, premiere_count, platform="discord"):
+def build_content_summary_parts(tv_count: int, movie_count: int, 
+                               premiere_count: int, platform: str = "discord") -> List[str]:
     """
     Build the content summary parts with counts and emojis
     
@@ -45,7 +83,7 @@ def build_content_summary_parts(tv_count, movie_count, premiere_count, platform=
         tv_count: Number of TV episodes
         movie_count: Number of movie releases
         premiere_count: Number of premieres
-        platform: 'discord' or 'slack' to control emoji spacing
+        platform: Platform name for formatting
         
     Returns:
         List of strings with formatted content parts
@@ -71,13 +109,14 @@ def build_content_summary_parts(tv_count, movie_count, premiere_count, platform=
     
     return parts
 
-def join_content_parts(parts, platform="discord"):
+
+def join_content_parts(parts: List[str], platform: str = "discord") -> str:
     """
     Join content parts with appropriate separators and formatting
     
     Args:
         parts: List of content summary parts
-        platform: 'discord' or 'slack' for platform-specific formatting
+        platform: Platform name for formatting
         
     Returns:
         Formatted string with all parts joined
@@ -97,9 +136,20 @@ def join_content_parts(parts, platform="discord"):
         # Join all but last with commas, then add the last with "and"
         return f"{bold_start}{', '.join(parts[:-1])}, and {parts[-1]}{bold_end}"
 
-def format_header_text(custom_header: str, start_date, end_date, show_date_range: bool) -> str:
+
+def format_header_text(custom_header: str, start_date, end_date, 
+                      show_date_range: bool) -> str:
     """
     Create a formatted header text with optional date range
+    
+    Args:
+        custom_header: Header text
+        start_date: Start date
+        end_date: End date
+        show_date_range: Whether to show date range
+        
+    Returns:
+        Formatted header text
     """
     header_text = f"# {custom_header}"
     
@@ -118,30 +168,36 @@ def format_header_text(custom_header: str, start_date, end_date, show_date_range
 def format_subheader_text(tv_count: int, movie_count: int, premiere_count: int) -> str:
     """
     Format the subheader text showing counts of content
+    
+    Args:
+        tv_count: Number of TV episodes
+        movie_count: Number of movie releases
+        premiere_count: Number of premieres
+        
+    Returns:
+        Formatted subheader text
     """
     # Determine if there are any events at all
     if tv_count == 0 and movie_count == 0:
         # No events at all
         return "**No new releases. Maybe it's a good day to take a walk?**\n\n"
     
-    # Handle pluralization
-    shows_text = "episode" if tv_count == 1 else "episodes"
-    movies_text = "movie release" if movie_count == 1 else "movie releases"
-    
-    # Simplify subheader construction
+    # Build subheader parts
     subheader_parts = []
 
     # Add TV shows count
     if tv_count > 0:
+        shows_text = pluralize("episode", tv_count)
         subheader_parts.append(f"📺 {tv_count} all-new {shows_text}")
 
     # Add movies if any
     if movie_count > 0:
+        movies_text = pluralize("movie release", movie_count)
         subheader_parts.append(f"🎬 {movie_count} {movies_text}")
 
     # Add premieres if any
     if premiere_count > 0:
-        premiere_text = "premiere" if premiere_count == 1 else "premieres"
+        premiere_text = pluralize("premiere", premiere_count)
         subheader_parts.append(f"🎉 {premiere_count} season {premiere_text}")
 
     # Join with appropriate separators
@@ -154,3 +210,30 @@ def format_subheader_text(tv_count: int, movie_count: int, premiere_count: int) 
         subheader = f"**{', '.join(subheader_parts[:-1])}, and {subheader_parts[-1]}**"
 
     return subheader + "\n\n"  # Add line break
+
+
+def get_day_colors(platform: str, start_week_on_monday: bool = True) -> Dict:
+    """
+    Get ROYGBIV color mapping for days of the week
+    
+    Args:
+        platform: Platform name
+        start_week_on_monday: Whether week starts on Monday
+        
+    Returns:
+        Dictionary mapping day names to color codes
+    """    
+    # Get days in order based on week start
+    days_order = get_days_order(start_week_on_monday)
+    
+    # ROYGBIV color order
+    color_order = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"]
+    
+    # Map colors to days
+    day_colors = {}
+    for i, day in enumerate(days_order):
+        color_name = color_order[i % len(color_order)]
+        day_colors[day] = COLOR_PALETTE[platform.lower()][color_name]
+    
+    return day_colors
+

@@ -53,7 +53,7 @@ class EmojiFormatter(logging.Formatter):
         return time.strftime("%Y-%m-%d %H:%M:%S", created)
       
 
-def setup_logging(log_dir: str = "/app/logs", log_file: str = "calendar.log", 
+def setup_logging(log_dir: str = "/app/logs", log_file: str = "calendarr.log", 
                   debug_mode: bool = False, max_size_mb: int = 1, 
                   backup_count: int = 15) -> logging.Logger:
     """
