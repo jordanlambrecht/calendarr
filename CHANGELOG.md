@@ -3,7 +3,7 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0]
 
 ### Added
 - Premiere count to the subheader
@@ -22,14 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactored
 - Broke large segments down into smaller functions to make it more "Pythonic"
 - We now are using a small Flask app w/ exposed port to keep the container alive and using apscheduler instead of cron jobs for more reliability
-- Dataclasses
+- Dataclasses and Abstraction
 
 
 ### Fixed
 - `START_WEEK_ON_MONDAY: false` was not being respected
 - Issue with different timezones not displaying the correct times/dates
 
-### Removed
 
 
 
