@@ -72,27 +72,6 @@ jobs:
           provenance: false
           sbom: false
 
-      - name: Update package visibility
-        if: github.event_name != 'pull_request'
-        run: |
-          echo ${{ steps.meta.outputs.tags }} | tr ',' '\n' | while read -r image; do
-            token="${{ secrets.GITHUB_TOKEN }}"
-            package_name=$(echo "$image" | sed -e "s|ghcr.io/||" | tr ':' '/')
-            echo "Making $package_name public..."
-            
-            # Extract package name and version
-            pkg_parts=(${package_name//@/ })
-            pkg_name=${pkg_parts[0]}
-            
-            # Set package visibility to public
-            gh api --method PATCH \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              /orgs/${{ github.repository_owner }}/packages/container/$pkg_name/visibility \
-              -f visibility="public"
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
