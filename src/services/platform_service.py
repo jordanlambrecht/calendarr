@@ -2,7 +2,7 @@
 # src/services/platform_service.py
 
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List
 from datetime import datetime
 
 from models.platform import Platform, DiscordPlatform, SlackPlatform
@@ -13,7 +13,7 @@ from constants import (
     MAX_DISCORD_EMBEDS_PER_REQUEST, PLATFORM_DISCORD, PLATFORM_SLACK, DISCORD_SUCCESS_CODES, SLACK_SUCCESS_CODES
 )
 
-logger = logging.getLogger("service - platform")
+logger = logging.getLogger("service_platform")
 
 
 class PlatformService:
@@ -122,7 +122,7 @@ class PlatformService:
             return False
         
         # Format and send days
-        # For Discord, we need to batch embeds
+        # For Discord, we need to run batch embeds
         if isinstance(platform, DiscordPlatform):
             # Format all embeds
             embeds = [platform.format_day(day) for day in days]

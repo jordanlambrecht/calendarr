@@ -135,7 +135,7 @@ def cleanup_log_files(log_dir: str, max_size: int = 1) -> None:
         for log_name in other_logs:
             log_path = os.path.join(log_dir, log_name)
             if os.path.exists(log_path) and os.path.getsize(log_path) > ((1024 * 1024) * max_size):
-                # Truncate the file
+                # Trunc the file
                 with open(log_path, 'w') as f:
                     f.write(f"Log file truncated at {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                 logger.info(f"Truncated log file: {log_path}")

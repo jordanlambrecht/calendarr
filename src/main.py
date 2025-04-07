@@ -2,27 +2,25 @@ import logging
 import argparse
 import traceback
 
-# Application imports
 from config.settings import load_config_from_env
 from services.calendar_service import CalendarService
 from services.platform_service import PlatformService
 from services.formatter_service import FormatterService
 from utils.date_utils import calculate_date_range
 
-logger = logging.getLogger("calendar")
+logger = logging.getLogger("main")
 
 def main():
     """Main function to process calendar events and send to messaging platforms"""
     
-    
-    # Parse command line arguments
+    # Parse command line arguments (not super helpful rn)
     parser = argparse.ArgumentParser(description='Process calendar events and send to Discord/Slack')
     parser.add_argument('--debug', action='store_true', help='Run in debug mode')
     args = parser.parse_args()
     
 
     try:
-        # Load configuration
+        # Load config
         config = load_config_from_env()
     except Exception as e:
         print(f"Error loading configuration: {e}")
@@ -30,7 +28,7 @@ def main():
 
 
     try:
-        # Calculate date range based on config
+        # Calculate date range
         logger.debug(f"🔍  loading date ranges from config")
         start_date, end_date = calculate_date_range(
             config.calendar_range,
@@ -40,7 +38,7 @@ def main():
     except Exception as e:
         logger.error(f"Error calculating date range: {e}")
 
-    # Initialize services
+    # Initialize
     calendar_service = CalendarService(config)
     formatter_service = FormatterService(config)
     platform_service = PlatformService(config)
@@ -81,6 +79,5 @@ def main():
         logger.error(traceback.format_exc())
         return False
     
-# Run the script if executed directly
 if __name__ == "__main__":
     main()

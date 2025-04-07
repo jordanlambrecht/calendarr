@@ -13,24 +13,21 @@ from flask import Flask
 from flask import cli
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-import time
 import main
 
 
 os.makedirs('/app/logs', exist_ok=True)
 
 
-from config.settings import load_config_from_env, Config
+from config.settings import load_config_from_env
 from utils.logging_utils import setup_logging, cleanup_log_files
 
-# Create Flask app
 app = Flask(__name__)
 
 # Disable the annoying Flask "dev server only" banner
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *_: None  
 
-# Global configuration
 config = None
 logger = None
 
@@ -39,10 +36,8 @@ def init_app():
     """Initialize application configuration and logging"""
     global config, logger
     
-    # Load configuration from environment variables
     config = load_config_from_env()
-    
-    # Set up logging with configured settings
+
     logger = setup_logging(
         log_dir=config.logging_settings.log_dir,
         log_file=config.logging_settings.log_file,
@@ -51,7 +46,6 @@ def init_app():
         backup_count=config.logging_settings.backup_count
     )
     
-    # Set debug level if requested
     if config.logging_settings.debug_mode:
         logger.setLevel("DEBUG")
         logger.info("🪲 Running in DEBUG mode")
@@ -84,10 +78,10 @@ def run_main_job():
 def log_ping():
     """Log a ping message every minute when debug is enabled"""
     if os.environ.get("DEBUG", "").lower() == "true":
-        logger.debug("🔄 Ping - Application is running")
+        logger.debug("🔄  Ping - Application is running")
 
 
-# Define Flask routes
+# Flask routes
 @app.route('/')
 def index():
     """Root endpoint"""
@@ -99,7 +93,7 @@ def health():
     return {"status": "healthy", "timestamp": datetime.datetime.now().isoformat()}
 
 
-# Initialize and configure the scheduler
+# Initialize/configure the scheduler
 def init_scheduler():
     """
     Initialize and configure the scheduler
@@ -119,7 +113,7 @@ def init_scheduler():
         logger.info("🪲 Debug mode enabled - adding ping job")
 
 
-    # Add log cleanup job
+    # log cleanup job
     scheduler.add_job(
         lambda: cleanup_log_files(
             config.logging_settings.log_dir,
@@ -131,7 +125,7 @@ def init_scheduler():
     )
 
     
-    # Configure the main job
+    # Configure main job
     schedule = config.schedule_settings
 
     if schedule.cron_schedule:
@@ -149,7 +143,7 @@ def init_scheduler():
             schedule.cron_schedule = None
             
 
-        # If no custom cron schedule, use schedule type
+    # If no custom cron schedule, use schedule type
     if not schedule.cron_schedule:
         if schedule.schedule_type == "DAILY":
             # Daily job at specified time

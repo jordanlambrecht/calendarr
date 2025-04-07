@@ -6,12 +6,12 @@ import requests
 import icalendar
 import recurring_ical_events
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List
 
 from models.event import Event
 from config.settings import Config, CalendarUrl
 
-logger = logging.getLogger("service - cal")
+logger = logging.getLogger("service_cal")
 
 
 class CalendarService:

@@ -5,7 +5,7 @@ import logging
 import requests
 from typing import Dict, List, Any
 
-logger = logging.getLogger("calendar")
+logger = logging.getLogger("service_webhook")
 
 
 class WebhookService:

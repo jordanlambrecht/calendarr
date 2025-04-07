@@ -6,7 +6,7 @@ import datetime
 from typing import Dict, List, Tuple
 import logging
 
-logger = logging.getLogger("date-utils")
+logger = logging.getLogger("utils_date")
 
 
 def calculate_date_range(calendar_range: str, start_week_on_monday: bool, timezone_str: str = "UTC"):
@@ -55,7 +55,7 @@ def calculate_date_range(calendar_range: str, start_week_on_monday: bool, timezo
         adjusted_weekday = 0 if weekday == 6 else weekday + 1
         logger.debug(f"📅  Adjusted weekday for Sunday-start: Python weekday={weekday}, adjusted={adjusted_weekday}")
     else:
-        # No adjustment needed if Monday is first day
+        # No change needed if Monday is first day
         adjusted_weekday = weekday
         logger.debug(f"📅  Using Monday-start weekday: {adjusted_weekday}")
     
@@ -63,7 +63,7 @@ def calculate_date_range(calendar_range: str, start_week_on_monday: bool, timezo
     # Subtract the adjusted weekday to get to the start of the week
     start_date = today - datetime.timedelta(days=adjusted_weekday)
     
-    # End date is 7 days after start date
+    # End date is 7 days after start date. Does your brain hurt yet? Mine does.
     end_date = start_date + datetime.timedelta(days=7)
     
     logger.debug(f"📅  Calculated date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
@@ -120,7 +120,7 @@ def parse_event_datetime(event_datetime: datetime.datetime,
     Returns:
         Dictionary with datetime components
     """
-    # Make sure we're working with the datetime in the correct timezone
+    # Make sure we're using datetime in the correct timezone
     local_tz = pytz.timezone(timezone)
     if event_datetime.tzinfo is not None:
         dt = event_datetime.astimezone(local_tz)

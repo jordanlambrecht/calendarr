@@ -3,20 +3,20 @@
 
 import logging
 import re
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Tuple
 from datetime import datetime
 from collections import defaultdict
 
 from models.day import Day
 from models.event import Event
 from config.settings import Config
-from utils.date_utils import get_days_order, get_short_day_name, parse_event_datetime, format_time, format_date_range
+from utils.date_utils import get_days_order, get_short_day_name, parse_event_datetime, format_time
 from utils.format_utils import (
-    apply_formatting, process_movie_event, get_day_colors
+    apply_formatting, process_movie_event
 )
 
 
-logger = logging.getLogger("calendar")
+logger = logging.getLogger("service_formatter")
 
 
 class FormatterService:
@@ -30,7 +30,7 @@ class FormatterService:
             config: Application configuration
         """
         self.config = config
-    
+    # This has unused vars but I'm lazy
     def process_events(self, events: List[Event], 
                      start_date: datetime, 
                      end_date: datetime) -> Tuple[List[Day], Dict[str, int]]:
@@ -78,7 +78,7 @@ class FormatterService:
                     formatted_entry = apply_formatting(
                         formatted_entry, 
                         "strikethrough", 
-                        "discord"  # This will be platform-specific in full implementation
+                        "discord"  # This will be platform-specific when I have more time
                     )
                     
                 days_data[event.day_key]["tv"].append(formatted_entry)
@@ -89,7 +89,7 @@ class FormatterService:
                     formatted_entry = apply_formatting(
                         formatted_entry, 
                         "strikethrough", 
-                        "discord"  # This will be platform-specific in full implementation
+                        "discord"  # This will be platform-specific when I have more time
                     )
                         
                 days_data[event.day_key]["movie"].append(formatted_entry)
@@ -160,7 +160,7 @@ class FormatterService:
                 time_str = format_time(
                     dt_parts["hour"], 
                     dt_parts["minute"], 
-                    "discord",  # This will be platform-specific in full implementation
+                    "discord",  # This will be platform-specific when I have more time
                     use_24_hour, 
                     add_leading_zero
                 )
@@ -180,7 +180,7 @@ class FormatterService:
                 time_str = format_time(
                     dt_parts["hour"], 
                     dt_parts["minute"], 
-                    "discord",  # This will be platform-specific in full implementation
+                    "discord",  # This will be platform-specific when I have more time
                     use_24_hour, 
                     add_leading_zero
                 )

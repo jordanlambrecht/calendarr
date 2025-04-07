@@ -10,7 +10,7 @@ from datetime import datetime
 class Day:
     """Represents a day with TV and movie events"""
     
-    name: str  # e.g., "Monday, Jan 01"
+    name: str  # something like "Monday, Jan 01"
     tv_events: List[str] = field(default_factory=list)
     movie_events: List[str] = field(default_factory=list)
     date: Optional[datetime] = None  # Full datetime object

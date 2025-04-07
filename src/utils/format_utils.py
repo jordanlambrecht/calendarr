@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # src/utils/format_utils.py
 
+# TODO: This file needs more debug logging eventually
 from typing import Dict, List
 from constants import NO_NEW_RELEASES_MSG, COLOR_PALETTE
 
@@ -182,7 +183,6 @@ def format_subheader_text(tv_count: int, movie_count: int, premiere_count: int) 
         # No events at all
         return "**No new releases. Maybe it's a good day to take a walk?**\n\n"
     
-    # Build subheader parts
     subheader_parts = []
 
     # Add TV shows count
@@ -223,13 +223,11 @@ def get_day_colors(platform: str, start_week_on_monday: bool = True) -> Dict:
     Returns:
         Dictionary mapping day names to color codes
     """    
-    # Get days in order based on week start
+
     days_order = get_days_order(start_week_on_monday)
-    
-    # ROYGBIV color order
+
     color_order = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"]
-    
-    # Map colors to days
+
     day_colors = {}
     for i, day in enumerate(days_order):
         color_name = color_order[i % len(color_order)]

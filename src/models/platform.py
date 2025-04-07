@@ -2,7 +2,7 @@
 # src/models/platform.py
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, List, Any
 from datetime import datetime
 import logging
 
@@ -123,7 +123,7 @@ class DiscordPlatform(Platform):
         # Get color for this day
         color = self.day_colors.get(day.day_name, 0)
         
-        # Combine TV and movie listings
+        # Combine tv and movie listings
         description = ""
         if day.tv_events:
             description += "\n".join(day.tv_events)
@@ -267,7 +267,7 @@ class SlackPlatform(Platform):
         Returns:
             Formatted day content string
         """
-        # First combine TV and movie events
+        # First combine tv and movie events
         day_content = ""
         if day.tv_events:
             day_content += "\n".join(day.tv_events)

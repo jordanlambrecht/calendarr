@@ -18,22 +18,22 @@ NO_NEW_RELEASES_MSG = "No new releases. Maybe it's a good day to take a walk?"
 # Color definitions
 COLOR_PALETTE = {
     "discord": {
-        "red": 15158332,      # Red
-        "orange": 15844367,   # Orange
-        "yellow": 16776960,   # Yellow
-        "green": 5763719,     # Green
-        "blue": 3447003,      # Blue
-        "indigo": 10181046,   # Indigo/Purple
-        "violet": 9846527     # Violet
+        "red": 15158332,      
+        "orange": 15844367,   
+        "yellow": 16776960,   
+        "green": 5763719,
+        "blue": 3447003,
+        "indigo": 10181046,
+        "violet": 9846527
     },
     "slack": {
-        "red": "#E53935",     # Red
-        "orange": "#FB8C00",  # Orange
-        "yellow": "#FFD600",  # Yellow
-        "green": "#43A047",   # Green
-        "blue": "#1E88E5",    # Blue
-        "indigo": "#5E35B1",  # Indigo
-        "violet": "#8E24AA"   # Violet
+        "red": "#E53935",
+        "orange": "#FB8C00",
+        "yellow": "#FFD600",
+        "green": "#43A047",
+        "blue": "#1E88E5",
+        "indigo": "#5E35B1",
+        "violet": "#8E24AA"
     }
 }
 
@@ -41,7 +41,7 @@ COLOR_PALETTE = {
 PLATFORM_DISCORD = "discord"
 PLATFORM_SLACK = "slack"
 
-## Needs to be removed eventually
+## Needs to be removed eventually but that's a tomorrow problem
 DEFAULT_PASSED_EVENT_HANDLING = "DISPLAY"
 DEFAULT_RUN_TIME = "09:00"
 DEFAULT_SCHEDULE_TYPE = "WEEKLY"

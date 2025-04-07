@@ -6,7 +6,7 @@ import logging
 import os
 import traceback
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 import pytz
 
 logger = logging.getLogger("config")
@@ -158,7 +158,7 @@ class ScheduleSettings:
             # Validate cron schedule if provided
             if self.cron_schedule:
                 logger.debug(f"🧪  Cron schedule provided: {self.cron_schedule}")
-                # Simple validation - just check if it has about 5-6 components
+                # Simple validation - just check if it has about like 5-6 components
                 cron_parts = self.cron_schedule.split()
                 if not (5 <= len(cron_parts) <= 6):
                     logger.warning(f"Suspicious cron format: {self.cron_schedule} - should have 5-6 components")
