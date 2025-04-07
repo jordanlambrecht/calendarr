@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
+# src/constants.py
 """
-Application-wide constants for Calendarr
+Application-wide constants
 """
-import pytz
-import os
 
 # Calendar parsing
 PREMIERE_PATTERN = r'[-\s](?:s\d+e0*1|(?:\d+x0*1))\b'
@@ -38,14 +37,13 @@ COLOR_PALETTE = {
     }
 }
 
-# Time-related constants
-DEFAULT_TIMEZONE = pytz.timezone(os.environ.get('TZ', 'UTC'))
+# Platform names
+PLATFORM_DISCORD = "discord"
+PLATFORM_SLACK = "slack"
 
-# Logging
-BACKUP_COUNT = 15  # Number of backup files to keep
-MAX_LOG_SIZE = 1
-
-# Default env variable These need to go away but im so tired!!! im always so tired.
-DEFAULT_SCHEDULE_TYPE = "WEEKLY"
-DEFAULT_RUN_TIME = "09:00"
+## Needs to be removed eventually
 DEFAULT_PASSED_EVENT_HANDLING = "DISPLAY"
+DEFAULT_RUN_TIME = "09:00"
+DEFAULT_SCHEDULE_TYPE = "WEEKLY"
+DEFAULT_HEADER = "New Releases"
+DEFAULT_CALENDAR_RANGE = "AUTO"
