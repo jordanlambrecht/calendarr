@@ -1,20 +1,20 @@
 ---
 name: calendarr
+
 # ╔══════════════════════════════════════╗
 # ║               SERVICES               ║
 # ╚══════════════════════════════════════╝
 services:
  calendarr:
-    # image: jordyjordyjordy/calendarr:latest
-    build: .
+    image: docker pull ghcr.io/jordanlambrecht/calendarr:latest
+    # build: .
     restart: "unless-stopped"
     container_name: calendarr
     environment:
       USE_DISCORD: "true"
-     
       USE_SLACK: "true"
-      USE_24_HOUR: "true"
-      DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/1234211881754038404/3m-0xa1G4-xmAfDZshBRzPp1iwbuUC6xQabBRxvR6qBF6WZ85rrp1UxjiTrHMNtRC8Z0"
+      USE_24_HOUR: "false"
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
       DISPLAY_TIME: "true"
       # type must be "tv" or "movie"
@@ -24,16 +24,16 @@ services:
           "type":"tv"
         },
         {
-          "url":"${ICS_URL_RADARR_1}",
-          "type":"movie"
-        },
-        {
           "url":"${ICS_URL_SONARR_2}",
           "type":"tv"
+        },
+        {
+          "url":"${ICS_URL_RADARR_1}",
+          "type":"movie"
         }]
       CUSTOM_HEADER: TV Guide - Shows and Movies airing this week
       SHOW_DATE_RANGE: true
-      DEBUG: true
+      DEBUG: false
       START_WEEK_ON_MONDAY: true
       TZ: "America/Chicago"
       # RUN_TIME AND SCHEDULE_TYPE
@@ -41,7 +41,7 @@ services:
       RUN_ON_STARTUP: true
       SCHEDULE_TYPE: "WEEKLY"  # DAILY or WEEKLY
       CALENDAR_RANGE: "AUTO"   # AUTO, DAY, or WEEK
-      PASSED_EVENT_HANDLING: "HIDE"    # DISPLAY, HIDE, or STRIKE
+      PASSED_EVENT_HANDLING: "STRIKE"    # DISPLAY, HIDE, or STRIKE
     volumes:
       - ./calendarr/logs:/app/logs:rw
     healthcheck:
