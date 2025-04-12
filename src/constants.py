@@ -4,18 +4,30 @@
 Application-wide constants
 """
 
-# Calendar parsing
+# ==============================================
+# Calendar & Event Parsing
+# ==============================================
 PREMIERE_PATTERN = r'[-\s](?:s\d+e0*1|(?:\d+x0*1))\b'
 
-# API-related
+# ==============================================
+# API & HTTP Settings
+# ==============================================
 MAX_DISCORD_EMBEDS_PER_REQUEST = 10
 DISCORD_SUCCESS_CODES = [200, 204]
 SLACK_SUCCESS_CODES = [200, 201, 204]
+DEFAULT_HTTP_TIMEOUT = 30  # seconds
 
-# User interface
+# ==============================================
+# Platform Names
+# ==============================================
+PLATFORM_DISCORD = "discord"
+PLATFORM_SLACK = "slack"
+
+# ==============================================
+# User Interface & Formatting
+# ==============================================
 NO_NEW_RELEASES_MSG = "No new releases. Maybe it's a good day to take a walk?"
 
-# Color definitions
 COLOR_PALETTE = {
     "discord": {
         "red": 15158332,      
@@ -37,13 +49,44 @@ COLOR_PALETTE = {
     }
 }
 
-# Platform names
-PLATFORM_DISCORD = "discord"
-PLATFORM_SLACK = "slack"
+# ==============================================
+# Default Configuration Values
+# ==============================================
 
-## Needs to be removed eventually but that's a tomorrow problem
+# --- General ---
+DEFAULT_DEBUG_MODE = False
+DEFAULT_HEADER = "New Releases"
+
+# --- Platforms ---
+DEFAULT_USE_DISCORD = True
+DEFAULT_USE_SLACK = False
+
+# --- Calendar & Events ---
+DEFAULT_CALENDAR_RANGE = "AUTO"
 DEFAULT_PASSED_EVENT_HANDLING = "DISPLAY"
+DEFAULT_START_WEEK_ON_MONDAY = True
+DEFAULT_DEDUPLICATE_EVENTS = True
+
+# --- Scheduling ---
 DEFAULT_RUN_TIME = "09:00"
 DEFAULT_SCHEDULE_TYPE = "WEEKLY"
-DEFAULT_HEADER = "New Releases"
-DEFAULT_CALENDAR_RANGE = "AUTO"
+DEFAULT_SCHEDULE_DAY = "1"  # Monday
+DEFAULT_RUN_ON_STARTUP = False
+
+# --- Time Formatting ---
+DEFAULT_USE_24_HOUR = True
+DEFAULT_ADD_LEADING_ZERO = True
+DEFAULT_DISPLAY_TIME = True
+DEFAULT_SHOW_DATE_RANGE = True
+
+# --- Logging ---
+DEFAULT_LOG_DIR = "/app/logs"
+DEFAULT_LOG_FILE = "calendarr.log"
+DEFAULT_LOG_BACKUP_COUNT = 15
+DEFAULT_LOG_MAX_SIZE_MB = 1
+
+# ==============================================
+# Valid Config Options
+# ==============================================
+VALID_PASSED_EVENT_HANDLING = ["DISPLAY", "HIDE", "STRIKE"]
+VALID_CALENDAR_RANGE = ["DAY", "WEEK", "AUTO"]

@@ -9,29 +9,17 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 import pytz
 
+from constants import (
+    DEFAULT_ADD_LEADING_ZERO, DEFAULT_DEBUG_MODE, DEFAULT_DEDUPLICATE_EVENTS,
+    DEFAULT_HTTP_TIMEOUT, DEFAULT_CALENDAR_RANGE, DEFAULT_PASSED_EVENT_HANDLING,
+    DEFAULT_RUN_ON_STARTUP, DEFAULT_SHOW_DATE_RANGE, DEFAULT_START_WEEK_ON_MONDAY,
+    DEFAULT_DISPLAY_TIME, DEFAULT_USE_24_HOUR, VALID_PASSED_EVENT_HANDLING,
+    VALID_CALENDAR_RANGE, DEFAULT_HEADER, DEFAULT_SCHEDULE_TYPE, DEFAULT_RUN_TIME,
+    DEFAULT_SCHEDULE_DAY, DEFAULT_LOG_DIR, DEFAULT_LOG_FILE, DEFAULT_LOG_BACKUP_COUNT,
+    DEFAULT_LOG_MAX_SIZE_MB, DEFAULT_USE_SLACK, DEFAULT_USE_DISCORD
+)
+
 logger = logging.getLogger("config")
-
-# Valid options with defaults
-DEFAULT_PASSED_EVENT_HANDLING = "DISPLAY"
-VALID_PASSED_EVENT_HANDLING = ["DISPLAY", "HIDE", "STRIKE"]
-
-DEFAULT_CALENDAR_RANGE = "WEEK"
-VALID_CALENDAR_RANGE = ["DAY", "WEEK", "AUTO"]
-
-DEFAULT_HEADER = "TV Guide"
-DEFAULT_SCHEDULE_TYPE = "WEEKLY"
-DEFAULT_RUN_TIME = "09:00"
-DEFAULT_SCHEDULE_DAY = "1"  # Monday
-
-# Logging settings default
-DEFAULT_LOG_DIR = "/app/logs"
-DEFAULT_LOG_FILE = "calendarr.log"
-DEFAULT_LOG_BACKUP_COUNT = 15
-DEFAULT_LOG_MAX_SIZE_MB = 1
-
-# HTTP timeouts
-DEFAULT_HTTP_TIMEOUT = 30  # seconds
-
 
 @dataclass
 class CalendarUrl:
@@ -98,9 +86,9 @@ class CalendarUrl:
 class TimeSettings:
     """Time display settings"""
     
-    use_24_hour: bool = False
-    add_leading_zero: bool = True
-    display_time: bool = True
+    use_24_hour: bool = DEFAULT_USE_24_HOUR
+    add_leading_zero: bool = DEFAULT_ADD_LEADING_ZERO
+    display_time: bool = DEFAULT_DISPLAY_TIME
     
     def __post_init__(self):
         try:
@@ -121,7 +109,7 @@ class ScheduleSettings:
     minute: int = field(init=False)
     schedule_day: str = DEFAULT_SCHEDULE_DAY
     cron_schedule: Optional[str] = None
-    run_on_startup: bool = False
+    run_on_startup: bool = DEFAULT_RUN_ON_STARTUP
     
     def __post_init__(self):
         """Parse hour and minute from run_time"""
@@ -177,7 +165,7 @@ class LoggingSettings:
     log_file: str = DEFAULT_LOG_FILE
     backup_count: int = DEFAULT_LOG_BACKUP_COUNT
     max_size_mb: int = DEFAULT_LOG_MAX_SIZE_MB
-    debug_mode: bool = False
+    debug_mode: bool = DEFAULT_DEBUG_MODE
     
     def __post_init__(self):
         try:
@@ -212,14 +200,14 @@ class Config:
     # Webhook settings
     discord_webhook_url: Optional[str] = None
     slack_webhook_url: Optional[str] = None
-    use_discord: bool = True
-    use_slack: bool = False
+    use_discord: bool = DEFAULT_USE_DISCORD
+    use_slack: bool = DEFAULT_USE_SLACK
     
     # Display settings
     custom_header: str = DEFAULT_HEADER
-    show_date_range: bool = True
-    start_week_on_monday: bool = True
-    deduplicate_events: bool = True
+    show_date_range: bool = DEFAULT_SHOW_DATE_RANGE
+    start_week_on_monday: bool = DEFAULT_START_WEEK_ON_MONDAY
+    deduplicate_events: bool = DEFAULT_DEDUPLICATE_EVENTS
     
     # Discord-specific settings
     discord_mention_role_id: Optional[str] = None
@@ -548,9 +536,9 @@ def load_config_from_env() -> Config:
         try:
             logger.debug("🔍  Loading time settings")
             time_settings = TimeSettings(
-                use_24_hour=get_env_bool("USE_24_HOUR", False),
-                add_leading_zero=get_env_bool("ADD_LEADING_ZERO", True),
-                display_time=get_env_bool("DISPLAY_TIME", True)
+                use_24_hour=get_env_bool("USE_24_HOUR", DEFAULT_USE_24_HOUR),
+                add_leading_zero=get_env_bool("ADD_LEADING_ZERO", DEFAULT_ADD_LEADING_ZERO),
+                display_time=get_env_bool("DISPLAY_TIME", DEFAULT_DISPLAY_TIME)
             )
             logger.debug(f"✅  Loaded time settings: {time_settings}")
         except Exception as e:
@@ -566,7 +554,7 @@ def load_config_from_env() -> Config:
                 run_time=os.environ.get("RUN_TIME", DEFAULT_RUN_TIME),
                 schedule_day=os.environ.get("SCHEDULE_DAY", DEFAULT_SCHEDULE_DAY),
                 cron_schedule=os.environ.get("CRON_SCHEDULE"),
-                run_on_startup=get_env_bool("RUN_ON_STARTUP", False)
+                run_on_startup=get_env_bool("RUN_ON_STARTUP", DEFAULT_RUN_ON_STARTUP)
             )
             logger.debug(f"✅  Loaded schedule settings: type={schedule_settings.schedule_type}, "
                          f"time={schedule_settings.run_time}, day={schedule_settings.schedule_day}")
@@ -583,7 +571,7 @@ def load_config_from_env() -> Config:
                 log_file=os.environ.get("LOG_FILE", DEFAULT_LOG_FILE),
                 backup_count=get_env_int("LOG_BACKUP_COUNT", DEFAULT_LOG_BACKUP_COUNT),
                 max_size_mb=get_env_int("MAX_LOG_SIZE", DEFAULT_LOG_MAX_SIZE_MB),
-                debug_mode=get_env_bool("DEBUG", False)
+                debug_mode=get_env_bool("DEBUG", DEFAULT_DEBUG_MODE)
             )
             logger.debug(f"✅  Loaded logging settings: dir={logging_settings.log_dir}, "
                          f"file={logging_settings.log_file}, debug={logging_settings.debug_mode}")
@@ -597,8 +585,8 @@ def load_config_from_env() -> Config:
             logger.debug("🔍  Loading webhook URLs and platform settings")
             discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
             slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
-            use_discord = get_env_bool("USE_DISCORD", True)
-            use_slack = get_env_bool("USE_SLACK", False)
+            use_discord = get_env_bool("USE_DISCORD", DEFAULT_USE_DISCORD)
+            use_slack = get_env_bool("USE_SLACK", DEFAULT_USE_SLACK)
             discord_mention_role_id=os.environ.get("MENTION_ROLE_ID")
             logger.debug(f"📋  Discord enabled: {use_discord}, webhook configured: {'yes' if discord_webhook_url else 'no'}")
             logger.debug(f"📋  Slack enabled: {use_slack}, webhook configured: {'yes' if slack_webhook_url else 'no'}")
@@ -609,25 +597,25 @@ def load_config_from_env() -> Config:
             discord_webhook_url = None
             slack_webhook_url = None
             discord_mention_role_id = None
-            use_discord = True
-            use_slack = False
+            use_discord = DEFAULT_USE_DISCORD
+            use_slack = DEFAULT_USE_SLACK
 
         # Load display settings
         try:
             logger.debug("🔍  Loading display settings")
             custom_header = os.environ.get("CUSTOM_HEADER", DEFAULT_HEADER)
-            show_date_range = get_env_bool("SHOW_DATE_RANGE", True)
-            start_week_on_monday = get_env_bool("START_WEEK_ON_MONDAY", True)
-            deduplicate_events = get_env_bool("DEDUPLICATE_EVENTS", True)
+            show_date_range = get_env_bool("SHOW_DATE_RANGE", DEFAULT_SHOW_DATE_RANGE)
+            start_week_on_monday = get_env_bool("START_WEEK_ON_MONDAY", DEFAULT_START_WEEK_ON_MONDAY)
+            deduplicate_events = get_env_bool("DEDUPLICATE_EVENTS", DEFAULT_DEDUPLICATE_EVENTS)
             logger.debug(f"✅  Loaded display settings: header='{custom_header}', "
                         f"show_date_range={show_date_range}, start_on_monday={start_week_on_monday}")
         except Exception as e:
             logger.error(f"Error loading display settings: {e}")
             logger.debug(f"❌  Exception details: {traceback.format_exc()}")
             custom_header = DEFAULT_HEADER
-            show_date_range = True
-            start_week_on_monday = True
-            deduplicate_events = True
+            show_date_range = DEFAULT_SHOW_DATE_RANGE
+            start_week_on_monday = DEFAULT_START_WEEK_ON_MONDAY
+            deduplicate_events = DEFAULT_DEDUPLICATE_EVENTS
         
         # Load calendar settings
         try:
