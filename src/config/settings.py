@@ -16,7 +16,8 @@ from constants import (
     DEFAULT_DISPLAY_TIME, DEFAULT_USE_24_HOUR, VALID_PASSED_EVENT_HANDLING,
     VALID_CALENDAR_RANGE, DEFAULT_HEADER, DEFAULT_SCHEDULE_TYPE, DEFAULT_RUN_TIME,
     DEFAULT_SCHEDULE_DAY, DEFAULT_LOG_DIR, DEFAULT_LOG_FILE, DEFAULT_LOG_BACKUP_COUNT,
-    DEFAULT_LOG_MAX_SIZE_MB, DEFAULT_USE_SLACK, DEFAULT_USE_DISCORD
+    DEFAULT_LOG_MAX_SIZE_MB, DEFAULT_USE_SLACK, DEFAULT_USE_DISCORD,
+    EVENT_TYPE_TV, EVENT_TYPE_MOVIE, VALID_EVENT_TYPES
 )
 
 logger = logging.getLogger("config")
@@ -48,8 +49,8 @@ class CalendarUrl:
             if not url:
                 logger.warning("Empty URL provided in calendar URL data")
                 
-            if type_val not in ["tv", "movie"]:
-                logger.warning(f"Unexpected calendar type: {type_val}, expected 'tv' or 'movie'")
+            if type_val not in VALID_EVENT_TYPES:
+                logger.warning(f"Unexpected calendar type: {type_val}, expected one of {VALID_EVENT_TYPES}")
                 
             return cls(
                 url=url,
@@ -58,8 +59,7 @@ class CalendarUrl:
         except Exception as e:
             logger.error(f"Error creating CalendarUrl from dict: {e}")
             logger.debug(f"❌  Exception details: {traceback.format_exc()}")
-            # Return a default object with empty values
-            return cls(url="", type="tv")
+            return cls(url="", type=EVENT_TYPE_TV)
     
     def to_dict(self) -> Dict[str, str]:
         """
@@ -362,8 +362,8 @@ class Config:
                 for i, url in enumerate(self.calendar_urls):
                     if not url.url:
                         errors.append(f"Calendar URL at index {i} is empty")
-                    if url.type not in ["tv", "movie"]:
-                        errors.append(f"Calendar URL at index {i} has invalid type: {url.type}")
+                    if url.type not in VALID_EVENT_TYPES:
+                        errors.append(f"Calendar URL at index {i} has invalid type: {url.type}, must be one of {VALID_EVENT_TYPES}")
             except Exception as e:
                 logger.error(f"Error validating calendar URLs: {e}")
                 errors.append(f"Internal error validating calendar URLs: {str(e)}")

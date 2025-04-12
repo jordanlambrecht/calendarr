@@ -6,9 +6,9 @@ from datetime import datetime, date
 import re
 import pytz
 from typing import Dict, Any, Tuple
-import icalendar # Add this import
+import icalendar
 
-from constants import PREMIERE_PATTERN
+from constants import PREMIERE_PATTERN, VALID_EVENT_TYPES
 
 
 @dataclass
@@ -18,8 +18,22 @@ class Event:
     summary: str
     start_time: datetime
     source_type: str  # "tv" or "movie"
-    raw_event: Dict[str, Any] = field(repr=False)  # Original iCal event
+    raw_event: Dict[str, Any] = field(repr=False)  # Incoming raw iCal event
     
+    def __post_init__(self):
+        """Validate event data after initialization"""
+        if not self.summary:
+            raise ValueError("Event summary cannot be empty")
+        if not isinstance(self.start_time, datetime):
+            raise TypeError("Event start_time must be a datetime object")
+
+        # if not isinstance(self.end_time, datetime):
+        #     raise TypeError("Event end_time must be a datetime object")
+        
+        # Use constant for validation
+        if self.source_type not in VALID_EVENT_TYPES:
+            raise ValueError(f"Invalid source_type: {self.source_type}, must be one of {VALID_EVENT_TYPES}")
+
     @property
     def is_premiere(self) -> bool:
         """
@@ -132,13 +146,11 @@ class Event:
         else:
             raise TypeError(f"Unexpected datetime type: {type(start)}")
         
-        # Determine if it's a premiere
-        is_premiere = bool(re.search(PREMIERE_PATTERN, summary, re.IGNORECASE))
         
         # Create Event object
         return cls(
             summary=summary,
             start_time=start,
-            source_type=source_type, # Use passed source_type
+            source_type=source_type,
             raw_event=event
         )

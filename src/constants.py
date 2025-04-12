@@ -18,10 +18,15 @@ SLACK_SUCCESS_CODES = [200, 201, 204]
 DEFAULT_HTTP_TIMEOUT = 30  # seconds
 
 # ==============================================
-# Platform Names
+# Common Names
 # ==============================================
 PLATFORM_DISCORD = "discord"
 PLATFORM_SLACK = "slack"
+EVENT_TYPE_TV = "tv"
+EVENT_TYPE_ANIME = "anime" # Coming soon (Maybe)
+EVENT_TYPE_ALBUM = "album" # Coming soon (Maybe)
+EVENT_TYPE_MOVIE = "movie"
+VALID_EVENT_TYPES = [EVENT_TYPE_TV, EVENT_TYPE_MOVIE]
 
 # ==============================================
 # User Interface & Formatting
@@ -50,7 +55,7 @@ COLOR_PALETTE = {
 }
 
 # ==============================================
-# Default Configuration Values
+# Default Config Values
 # ==============================================
 
 # --- General ---
@@ -90,3 +95,10 @@ DEFAULT_LOG_MAX_SIZE_MB = 1
 # ==============================================
 VALID_PASSED_EVENT_HANDLING = ["DISPLAY", "HIDE", "STRIKE"]
 VALID_CALENDAR_RANGE = ["DAY", "WEEK", "AUTO"]
+
+# ==============================================
+# Scheduler Job IDs
+# ==============================================
+JOB_ID_DEBUG_PING = 'debug_ping_job'
+JOB_ID_LOG_CLEANUP = 'log_cleanup_job'
+JOB_ID_MAIN = 'main_job'

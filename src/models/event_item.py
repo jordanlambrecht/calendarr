@@ -4,6 +4,9 @@
 from dataclasses import dataclass
 from typing import Optional
 
+# Import constants
+from constants import EVENT_TYPE_TV, EVENT_TYPE_MOVIE
+
 
 @dataclass
 class EventItem:
@@ -32,7 +35,7 @@ class EventItem:
         Returns:
             Boolean indicating if event has time
         """
-        return self.time_str is not None and self.time_str != ""
+        return self.time_str is not None
     
     @property
     def is_tv(self) -> bool:
@@ -42,7 +45,8 @@ class EventItem:
         Returns:
             Boolean indicating if event is a TV show
         """
-        return self.source_type == "tv"
+        # Use constant
+        return self.source_type == EVENT_TYPE_TV
     
     @property
     def is_movie(self) -> bool:
@@ -52,4 +56,5 @@ class EventItem:
         Returns:
             Boolean indicating if event is a movie
         """
-        return self.source_type == "movie"
+        # Use constant
+        return self.source_type == EVENT_TYPE_MOVIE
