@@ -6,7 +6,7 @@ import requests
 import icalendar
 import recurring_ical_events
 from datetime import datetime
-from typing import List, Dict, Set
+from typing import List
 
 from models.event import Event
 from config.settings import Config, CalendarUrl
@@ -67,7 +67,7 @@ class CalendarService:
         url = calendar_url.url
         source_type = calendar_url.type
         
-        logger.info(f"Fetching events for {source_type} between "
+        logger.info(f"⏳  Fetching events for {source_type} between "
                    f"{start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}")
         
         try:

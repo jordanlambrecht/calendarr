@@ -12,6 +12,7 @@ from models.event import Event
 from models.event_item import EventItem
 from config.settings import Config
 from utils.date_utils import get_days_order, get_short_day_name, parse_event_datetime, format_time
+from constants import EVENT_TYPE_TV, EVENT_TYPE_MOVIE
 
 logger = logging.getLogger("service_formatter")
 
@@ -46,20 +47,26 @@ class FormatterService:
             return [], {"tv_count": 0, "movie_count": 0, "premiere_count": 0}
         
         # Count events by type
-        tv_count = sum(1 for e in events if e.source_type == "tv")
-        movie_count = sum(1 for e in events if e.source_type == "movie")
+        tv_count = sum(1 for e in events if e.source_type == EVENT_TYPE_TV)
+        movie_count = sum(1 for e in events if e.source_type == EVENT_TYPE_MOVIE)
         
         logger.debug(f"🔢 Processing {tv_count} TV episodes and {movie_count} movies for display")
         
-        # Group events by day
-        days_data = defaultdict(lambda: {"tv": [], "movie": []})
-        premiere_count = 0
+        # Deduplicate events if enabled
+        original_event_count = len(events)
+        events = self._deduplicate_events(events)
+        deduplicated_count = original_event_count - len(events)
         
-        # Process each event
+        # Group events by day and type
+        days_data = defaultdict(lambda: {EVENT_TYPE_TV: [], EVENT_TYPE_MOVIE: []})
+        premiere_count = 0
+        skipped_past_count = 0
+        
         for event in events:
             # Skip past events if configured to hide them
             if event.is_past and self.config.passed_event_handling == "HIDE":
-                logger.debug(f"⏪ Skipping past event: {event.summary}")
+                logger.debug(f"⏪  Skipping past event: {event.summary}")
+                skipped_past_count += 1
                 continue
             
             # Create EventItem from Event
@@ -70,36 +77,45 @@ class FormatterService:
                 premiere_count += 1
             
             # Add to the appropriate day and type
-            if event_item.is_tv:
-                days_data[event.day_key]["tv"].append(event_item)
-            else:  # movie
-                days_data[event.day_key]["movie"].append(event_item)
+            event_date = event.start_time.date()
+            days_data[event_date][event_item.source_type].append(event_item)
         
-        # Sort days by day of week
-        day_order = get_days_order(self.config.start_week_on_monday)
-        
-        # Convert to Day objects
+        # Create Day objects
         days = []
-        
-        for day_key, content in sorted(days_data.items(), 
-                                     key=lambda x: day_order.index(x[0].split(',')[0])):
+        for date_obj, content in sorted(days_data.items()): # Use date_obj to avoid confusion
+            day_name_str = date_obj.strftime('%A, %b %d') # Format the name string
             day = Day(
-                name=day_key,
-                tv_events=content["tv"],
-                movie_events=content["movie"]
+                name=day_name_str, # Pass the formatted name
+                date=date_obj, # Pass the original date object
+                tv_events=content[EVENT_TYPE_TV],
+                movie_events=content[EVENT_TYPE_MOVIE]
             )
             days.append(day)
         
-        # Log days processed
         logger.info(f"📊 Total days processed: {len(days)}")
         for day in days:
-            logger.info(f"    ├ {get_short_day_name(day.day_name)}: {day.total_events} events")
+            logger.info(f"    ├ {get_short_day_name(day.name)}: {day.total_events} events")
         
-        return days, {
-            "tv_count": tv_count,
-            "movie_count": movie_count,
-            "premiere_count": premiere_count
+        stats = {
+            "total_tv": tv_count,
+            "total_movies": movie_count,
+            "total_premieres": premiere_count,
+            "total_deduplicated": deduplicated_count,
+            "total_skipped_past": skipped_past_count,
+            "start_date": start_date,
+            "end_date": end_date
         }
+
+        logger.info("📊 Processed Events Summary:")
+        logger.info(f"    ├ TV Episodes: {stats['total_tv']}")
+        logger.info(f"    ├ Movies: {stats['total_movies']}")
+        logger.info(f"    ├ Premieres: {stats['total_premieres']}")
+        if stats['total_deduplicated'] > 0:
+             logger.info(f"    ├ Duplicates Removed: {stats['total_deduplicated']}")
+        if stats['total_skipped_past'] > 0:
+             logger.info(f"    ├ Past Events Skipped: {stats['total_skipped_past']}")
+
+        return days, stats
         
     def _deduplicate_events(self, events: List[Event]) -> List[Event]:
         """
@@ -171,7 +187,7 @@ class FormatterService:
         episode_title = None
         
         # For TV shows, try to parse show, episode number, and title
-        if event.source_type == "tv":
+        if event.source_type == EVENT_TYPE_TV:
             parts = re.split(r'\s+-\s+', summary, 1)
             if len(parts) == 2:
                 show_name = parts[0]

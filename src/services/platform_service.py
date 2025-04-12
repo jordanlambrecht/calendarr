@@ -2,6 +2,7 @@
 # src/services/platform_service.py
 
 import logging
+import traceback
 from typing import Dict, List
 from datetime import datetime
 
@@ -58,10 +59,10 @@ class PlatformService:
         return platforms
     
     def send_to_platforms(self, days: List[Day], events_summary: Dict[str, int],
-                         start_date: datetime, end_date: datetime) -> Dict[str, bool]:
+                          start_date: datetime, end_date: datetime) -> Dict[str, bool]:
         """
         Send calendar data to all enabled platforms
-        
+
         Args:
             days: List of Day objects to send
             events_summary: Dictionary with event counts
@@ -72,88 +73,71 @@ class PlatformService:
             Dictionary mapping platform names to success status
         """
         results = {}
-        
-        for platform_name, platform in self.platforms.items():
-            logger.info(f"📤 Sending to {platform_name.capitalize()}")
-            
-            try:
-                success = self._send_to_platform(
-                    platform, 
-                    days, 
-                    events_summary,
-                    start_date, 
-                    end_date
-                )
-                results[platform_name] = success
-                logger.info(f"Successfully sent to {platform_name.capitalize()}: {success}")
-            except Exception as e:
-                logger.error(f"Error sending to {platform_name}: {str(e)}")
-                results[platform_name] = False
-        
+        for platform_name, platform_instance in self.platforms.items():
+            results[platform_name] = self._send_to_platform(
+                platform_instance,
+                days,
+                events_summary,
+                start_date,
+                end_date
+            )
         return results
     
-    def _send_to_platform(self, platform: Platform, days: List[Day], 
-                         events_summary: Dict[str, int], start_date: datetime, 
+    def _send_to_platform(self, platform: Platform, days: List[Day],
+                         events_summary: Dict[str, int], start_date: datetime,
                          end_date: datetime) -> bool:
         """
-        Send to a specific platform
-        
-        Args:
-            platform: Platform instance
-            days: List of Day objects
-            events_summary: Dictionary with event counts
-            start_date: Start date of range
-            end_date: End date of range
-            
-        Returns:
-            Boolean indicating success
+        Send formatted messages to a specific platform
         """
-        # Format header
-        header = platform.format_header(
-            self.config.custom_header,
-            start_date,
-            end_date,
-            self.config.show_date_range,
-            events_summary["tv_count"],
-            events_summary["movie_count"],
-            events_summary["premiere_count"]
-        )
-        
-        # Send header
-        if not platform.send_message(header):
+        try:
+            logger.info(f"📤 Sending to {platform.__class__.__name__}")
+
+            # Format header using data from events_summary
+            header_payload = platform.format_header(
+                custom_header=self.config.custom_header,
+                start_date=start_date, # Use start_date from arguments
+                end_date=end_date,     # Use end_date from arguments
+                show_date_range=self.config.show_date_range,
+                # Extract counts using correct keys and pass with expected argument names
+                tv_count=events_summary.get("total_tv", 0),
+                movie_count=events_summary.get("total_movies", 0),
+                premiere_count=events_summary.get("total_premieres", 0)
+            )
+
+            # Send header
+            success = platform.send_message(header_payload)
+            if not success:
+                logger.error(f"☠️  Failed to send header to {platform.__class__.__name__}")
+                # Optionally decide if you want to stop here or try sending days
+                # return False # Uncomment to stop if header fails
+
+            # Format and send days (handle platform specifics like Discord batching)
+            if isinstance(platform, DiscordPlatform):
+                # Batch embeds for Discord
+                embeds = [platform.format_day(day) for day in days]
+                for i in range(0, len(embeds), MAX_DISCORD_EMBEDS_PER_REQUEST):
+                    batch = embeds[i:i + MAX_DISCORD_EMBEDS_PER_REQUEST]
+                    day_payload = {"embeds": batch}
+                    if not platform.send_message(day_payload):
+                        logger.error(f"☠️  Failed to send day batch {i // MAX_DISCORD_EMBEDS_PER_REQUEST + 1} to Discord")
+                        success = False # Mark overall success as False if any batch fails
+            elif isinstance(platform, SlackPlatform):
+                # Send attachments for Slack
+                attachments = [platform.format_day(day) for day in days]
+                if attachments: # Only send if there are days with events
+                    day_payload = {"attachments": attachments}
+                    if not platform.send_message(day_payload):
+                        logger.error("Failed to send days to Slack")
+                        success = False
+            else:
+                # Handle other potential platforms if added later
+                logger.warning(f"⚠️  Sending days not implemented for platform type: {type(platform)}")
+
+
+            logger.info(f"👍  Successfully sent to {platform.__class__.__name__}: {success}")
+            return success
+
+        except Exception as e:
+            logger.error(f"☠️  Error sending to {platform.__class__.__name__.lower()}: {e}")
+            logger.debug(traceback.format_exc())
             return False
-        
-        # Format and send days
-        # For Discord, we need to run batch embeds
-        if isinstance(platform, DiscordPlatform):
-            # Format all embeds
-            embeds = [platform.format_day(day) for day in days]
-            
-            # Group embeds into batches
-            embed_batches = [
-                embeds[i:i+MAX_DISCORD_EMBEDS_PER_REQUEST] 
-                for i in range(0, len(embeds), MAX_DISCORD_EMBEDS_PER_REQUEST)
-            ]
-            
-            # Send each batch
-            for batch in embed_batches:
-                payload = {"embeds": batch}
-                if not platform.send_message(payload):
-                    return False
-                
-            return True
-        elif isinstance(platform, SlackPlatform):
-            # For Slack, we create attachments
-            attachments = [platform.format_day(day) for day in days]
-            
-            # Send all attachments at once
-            payload = {"attachments": attachments}
-            return platform.send_message(payload)
-        else:
-            # Generic implementation for other platforms
-            for day in days:
-                day_payload = platform.format_day(day)
-                if not platform.send_message(day_payload):
-                    return False
-            
-            return True

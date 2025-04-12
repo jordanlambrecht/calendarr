@@ -15,8 +15,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import main
 
+from constants import (
+    DEFAULT_LOG_DIR, JOB_ID_DEBUG_PING, JOB_ID_LOG_CLEANUP, JOB_ID_MAIN
+)
 
-os.makedirs('/app/logs', exist_ok=True)
+os.makedirs(DEFAULT_LOG_DIR, exist_ok=True)
 
 
 from config.settings import load_config_from_env
@@ -50,7 +53,7 @@ def init_app():
         logger.setLevel("DEBUG")
         logger.info("🪲 Running in DEBUG mode")
         
-    logger.info("Application initialized with configuration")
+    logger.info("🚀  Application initialized with configuration")
     return config
 
     
@@ -66,8 +69,12 @@ def run_main_job():
         with redirect_stdout(output), redirect_stderr(output):
             success = main.main()
         
-        logger.info(f"Job output: {output.getvalue()}")
-        logger.info(f"✅  Job completed with success: {success}")
+        # logger.info(f"Job output: {output.getvalue()}")
+        if not success:
+            logger.info(f"⚠️  Job completed with success: {success}")
+        else:
+            logger.info("✅  Job completed with success: {success}")
+        
         
     except Exception as e:
         logger.error(f"☠️  Error in main job: {str(e)}")
@@ -109,7 +116,7 @@ def init_scheduler():
     
     # Add debug ping job if debug is enabled
     if config.logging_settings.debug_mode:
-        scheduler.add_job(log_ping, 'interval', minutes=1, id='debug_ping_job')
+        scheduler.add_job(log_ping, 'interval', minutes=1, id=JOB_ID_DEBUG_PING)
         logger.info("🪲 Debug mode enabled - adding ping job")
 
 
@@ -121,7 +128,7 @@ def init_scheduler():
         ),
         'interval',
         hours=24,
-        id='log_cleanup_job'
+        id=JOB_ID_LOG_CLEANUP
     )
 
     
@@ -134,12 +141,12 @@ def init_scheduler():
             scheduler.add_job(
                 run_main_job,
                 CronTrigger.from_crontab(schedule.cron_schedule),
-                id='main_job'
+                id=JOB_ID_MAIN
             )
         except Exception as e:
-            logger.error(f"Invalid cron schedule: {e}")
+            logger.error(f"☠️  Invalid cron schedule: {e}")
             # Fall back to default scheduling
-            logger.info("Falling back to default schedule")
+            logger.info("⚠️  Falling back to default schedule")
             schedule.cron_schedule = None
             
 
@@ -147,15 +154,15 @@ def init_scheduler():
     if not schedule.cron_schedule:
         if schedule.schedule_type == "DAILY":
             # Daily job at specified time
-            logger.info(f"Scheduling DAILY job at {schedule.hour}:{schedule.minute}")
+            logger.info(f"📅  Scheduling DAILY job at {schedule.hour}:{schedule.minute}")
             scheduler.add_job(
                 run_main_job, 
                 CronTrigger(hour=schedule.hour, minute=schedule.minute),
-                id='main_job'
+                id=JOB_ID_MAIN
             )
         else:
             # Weekly job at specified time and day
-            logger.info(f"Scheduling WEEKLY job at {schedule.hour}:{schedule.minute} "
+            logger.info(f"📅  Scheduling WEEKLY job at {schedule.hour}:{schedule.minute} "
                        f"on day {schedule.schedule_day}")
             scheduler.add_job(
                 run_main_job, 
@@ -164,13 +171,13 @@ def init_scheduler():
                     hour=schedule.hour, 
                     minute=schedule.minute
                 ),
-                id='main_job'
+                id=JOB_ID_MAIN
             )
     
 
     # Run on startup if configured
     if schedule.run_on_startup:
-        logger.info("Running job on startup")
+        logger.info("🚀  Running job on startup")
         scheduler.add_job(
             run_main_job,
             'date', 
@@ -180,23 +187,42 @@ def init_scheduler():
     
     # Start the scheduler
     scheduler.start()
-    logger.info("Scheduler started")
+    logger.info("👍  Scheduler started")
     return scheduler
 
 if __name__ == "__main__":
-    # Initialize the scheduler
-    config = init_app()
-    scheduler = init_scheduler()
-    
-    # Disable all Flask logging
-    import logging
-    log = logging.getLogger('werkzeug')
-    log.disabled = True
-    
-    app.run(
-        host='0.0.0.0', 
-        port=5000, 
-        debug=False,
-        use_reloader=False,
-        threaded=True
-    )
+    try:
+        # Initialize config and scheduler (which also adds jobs and starts)
+        config = init_app()
+        scheduler = init_scheduler()
+
+        # Disable all Flask logging
+        log = logging.getLogger('werkzeug')
+        log.disabled = True
+
+        logger.info("🚀  Starting Flask server...") # Add log message
+        app.run(
+            host='0.0.0.0',
+            port=5000,
+            debug=False,
+            use_reloader=False,
+            threaded=True
+        )
+
+    except ValueError as e:
+        # Handle configuration validation errors during init_app()
+        # Check if logger exists before using it
+        if logger:
+            logger.error(f"Configuration error: {e}")
+        else:
+            print(f"Configuration error before logger initialization: {e}")
+        sys.exit(1)
+    except Exception as e:
+        # Catch other potential startup errors
+        if logger:
+            logger.error(f"An unexpected error occurred during startup: {e}")
+            logger.debug(traceback.format_exc())
+        else:
+            print(f"Unexpected error before logger initialization: {e}")
+            print(traceback.format_exc())
+        sys.exit(1)

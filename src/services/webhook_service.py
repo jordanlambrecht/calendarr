@@ -42,13 +42,16 @@ class WebhookService:
                 headers=headers, 
                 timeout=self.http_timeout
             )
+            logger.debug(f"Webhook URL: {webhook_url}")
+            is_success = response.status_code in success_codes
+            emoji = "✅" if is_success else "❌"
+
+            logger.info(f"{emoji}  Webhook response status code: {response.status_code}")
             
-            logger.info(f"Webhook response status code: {response.status_code}")
-            
-            if response.status_code in success_codes:
+            if is_success:
                 return True
             else:
-                logger.error(f"Failed to send webhook: {response.text}")
+                logger.error(f"❌  Failed to send webhook: {response.text}")
                 return False
                 
         except requests.RequestException as e:
