@@ -42,6 +42,7 @@ services:
       SCHEDULE_TYPE: "WEEKLY"  # DAILY or WEEKLY
       CALENDAR_RANGE: "AUTO"   # AUTO, DAY, or WEEK
       PASSED_EVENT_HANDLING: "STRIKE"    # DISPLAY, HIDE, or STRIKE
+      DEDUPLICATE_EVENTS: "true" 
     volumes:
       - ./calendarr/logs:/app/logs:rw
     healthcheck:

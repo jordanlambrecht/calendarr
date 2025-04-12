@@ -219,7 +219,8 @@ class Config:
     custom_header: str = DEFAULT_HEADER
     show_date_range: bool = True
     start_week_on_monday: bool = True
-
+    deduplicate_events: bool = True
+    
     # Discord-specific settings
     discord_mention_role_id: Optional[str] = None
     
@@ -610,13 +611,14 @@ def load_config_from_env() -> Config:
             discord_mention_role_id = None
             use_discord = True
             use_slack = False
-        
+
         # Load display settings
         try:
             logger.debug("🔍  Loading display settings")
             custom_header = os.environ.get("CUSTOM_HEADER", DEFAULT_HEADER)
             show_date_range = get_env_bool("SHOW_DATE_RANGE", True)
             start_week_on_monday = get_env_bool("START_WEEK_ON_MONDAY", True)
+            deduplicate_events = get_env_bool("DEDUPLICATE_EVENTS", True)
             logger.debug(f"✅  Loaded display settings: header='{custom_header}', "
                         f"show_date_range={show_date_range}, start_on_monday={start_week_on_monday}")
         except Exception as e:
@@ -625,6 +627,7 @@ def load_config_from_env() -> Config:
             custom_header = DEFAULT_HEADER
             show_date_range = True
             start_week_on_monday = True
+            deduplicate_events = True
         
         # Load calendar settings
         try:
@@ -667,6 +670,7 @@ def load_config_from_env() -> Config:
                 passed_event_handling=passed_event_handling,
                 calendar_range=calendar_range,
                 time_settings=time_settings,
+                deduplicate_events=deduplicate_events,
                 schedule_settings=schedule_settings,
                 logging_settings=logging_settings,
                 timezone=timezone,

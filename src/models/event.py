@@ -54,6 +54,44 @@ class Event:
         """
         return self.start_time.strftime('%A, %b %d')
     
+    def get_event_key(self) -> tuple:
+        """
+        Get a unique key for identifying this event
+        
+        This is used for deduplication purposes. Events with the same
+        summary (title) and date are considered duplicates.
+        
+        Returns:
+            Tuple of (summary, date) that uniquely identifies the event
+        """
+        return (self.summary, self.start_time.date())
+    
+    def __eq__(self, other):
+        """
+        Compare events for equality
+        
+        Two events are considered equal if they have the same summary and start date.
+        This is useful for deduplication.
+        
+        Args:
+            other: Another Event object to compare with
+            
+        Returns:
+            Boolean indicating if events are equal
+        """
+        if not isinstance(other, Event):
+            return False
+        return self.get_event_key() == other.get_event_key()
+    
+    def __hash__(self):
+        """
+        Generate hash value for Event
+        
+        Returns:
+            Hash based on the event's key components
+        """
+        return hash(self.get_event_key())
+    
     @classmethod
     def from_ical_event(cls, event: Dict[str, Any], timezone: pytz.timezone) -> 'Event':
         """

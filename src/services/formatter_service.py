@@ -30,6 +30,8 @@ class FormatterService:
             config: Application configuration
         """
         self.config = config
+    
+
     # This has unused vars but I'm lazy
     def process_events(self, events: List[Event], 
                      start_date: datetime, 
@@ -47,6 +49,8 @@ class FormatterService:
         """
         if not events:
             return [], {"tv_count": 0, "movie_count": 0, "premiere_count": 0}
+
+        events = self._deduplicate_events(events)
         
         # Count events by type
         tv_count = sum(1 for e in events if e.source_type == "tv")
@@ -119,6 +123,37 @@ class FormatterService:
             "movie_count": movie_count,
             "premiere_count": premiere_count
         }
+    def _deduplicate_events(self, events: List[Event]) -> List[Event]:
+        """
+        Deduplicate events with the same summary and day
+        
+        Args:
+            events: List of events to deduplicate
+            
+        Returns:
+            Deduplicated list of events
+        """
+        # Skip deduplication if disabled in config
+        if not self.config.deduplicate_events:
+            logger.debug("⚙️ Event deduplication disabled in config")
+            return events
+            
+        unique_events = {}
+        
+        for event in events:
+            key = event.get_event_key()
+            
+            if key not in unique_events or event.start_time < unique_events[key].start_time:
+                unique_events[key] = event
+                
+        original_count = len(events)
+        deduplicated_count = len(unique_events)
+        duplicates_removed = original_count - deduplicated_count
+        
+        if duplicates_removed > 0:
+            logger.info(f"🔄 Removed {duplicates_removed} duplicate events")
+            
+        return list(unique_events.values())
     
     def _process_tv_event(self, event: Event) -> str:
         """

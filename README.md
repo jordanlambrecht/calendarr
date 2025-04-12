@@ -75,6 +75,7 @@ docker run -d \
 | `PASSED_EVENT_HANDLING` | String | How to display past events: "DISPLAY", "HIDE", or "STRIKE" (Default: "STRIKE") |
 | `CALENDAR_RANGE` | String | "AUTO", "DAY", or "WEEK" - controls how many days of events to show (Default: "AUTO"). *See Below* |
 | `MENTION_ROLE` | String | *Discord only* Role ID to mention in the subheader in Discord (Format: `123456789012345678`. Numbers only.) |
+| `DEDUPLICATE_EVENTS` | Boolean | Remove duplicate events from multiple sources (Optional. Default: true) |
 
 ## Schedule Configuration
 
