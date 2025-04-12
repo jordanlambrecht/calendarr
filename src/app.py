@@ -57,7 +57,7 @@ def init_app():
 
 
 def run_main_job():
-    """Run the main calendar-to-discord script"""
+    """Run the main calandarr script"""
     logger.info("⚙️  Running main job")
 
     try:

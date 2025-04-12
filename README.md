@@ -36,7 +36,7 @@ ICS_URL_RADARR_1=your_radarr_calendar_url
 
 ```bash
 docker run -d \
-  --name calendar-discord-notifier \
+  --name calandarr \
   -e DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/your_webhook" \
   -e CALENDAR_URLS='[{"url":"https://sonarr.example.com/feed/calendar/api.ics","type":"tv"},{"url":"https://radarr.example.com/feed/calendar/api.ics","type":"movie"}]' \
   -e CUSTOM_HEADER="My Media Guide" \
@@ -50,7 +50,7 @@ docker run -d \
 ### To Run Offschedule 
 
 1. Start the container via the compose file with `docker compose up -d`
-2. Use the command `docker exec calendar-discord-notifier python /app/calendar-to-discord.py` as willy nilly as you wish
+2. Use the command `docker exec calandarr python /app/main.py` as willy nilly as you wish
 
 
 ## 🛠️ Configuration
