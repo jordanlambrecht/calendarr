@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calendarr"
+version = "1.4.0"
+description = "A Docker container that fetches upcoming airings/releases for TV shows and movies from Sonarr and Radarr calendars and posts them to Discord/Slack on a schedule."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Jordan Lambrecht", email = "me@jordanlambrecht.com" },
+]
+maintainers = [
+  { name = "Jordan Lambrecht", email = "me@jordanlambrecht.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Communications :: Chat",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "Flask",
+    "Flask-APScheduler",
+    "requests",
+    "icalendar",
+    "recurring-ical-events",
+    "pytz",
+    "python-dotenv",
+]
+
+[project.urls]
+Homepage = "https://github.com/jordanlambrecht/calendarr"
+Repository = "https://github.com/jordanlambrecht/calendarr"
+Issues = "https://github.com/jordanlambrecht/calendarr/issues"
