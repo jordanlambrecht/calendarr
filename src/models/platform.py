@@ -7,6 +7,7 @@ from datetime import datetime
 import logging
 
 from models.day import Day
+from models.event_item import EventItem
 from config.settings import Config
 from utils.format_utils import (
     format_header_text, format_subheader_text, get_day_colors, join_content_parts,
@@ -24,7 +25,7 @@ logger = logging.getLogger("platform")
 class Platform(ABC):
     """Abstract base class for messaging platforms"""
     
-    def __init__(self, webhook_url: str, webhook_service: WebhookService, success_codes: List[int]):
+    def __init__(self, webhook_url: str, webhook_service: WebhookService, success_codes: List[int], config: Config  ):
         """
         Initialize platform
         
@@ -32,10 +33,12 @@ class Platform(ABC):
             webhook_url: URL to send messages to
             webhook_service: Service for sending webhook requests
             success_codes: HTTP status codes that indicate success
+            config: Application configuration
         """
         self.webhook_url = webhook_url
         self.webhook_service = webhook_service
         self.success_codes = success_codes
+        self.config = config
         self.day_colors = self._initialize_day_colors()
     
     @abstractmethod
@@ -97,16 +100,44 @@ class Platform(ABC):
             payload,
             self.success_codes
         )
+    
+    @abstractmethod
+    def format_tv_event(self, event_item: EventItem, passed_event_handling: str) -> str:
+        """
+        Format a TV event for this platform
+        
+        Args:
+            event_item: EventItem to format
+            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
+            
+        Returns:
+            Formatted string for this platform
+        """
+        pass
+    
+    @abstractmethod
+    def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
+        """
+        Format a movie event for this platform
+        
+        Args:
+            event_item: EventItem to format
+            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
+            
+        Returns:
+            Formatted string for this platform
+        """
+        pass
 
 
-class DiscordPlatform(Platform):
+class  DiscordPlatform(Platform):
     """Discord implementation of Platform"""
     
     def __init__(self, webhook_url: str, webhook_service: WebhookService, 
                  success_codes: List[int], config: Config):
         """Initialize with configuration"""
-        super().__init__(webhook_url, webhook_service, success_codes)
-        self.config = config
+        super().__init__(webhook_url, webhook_service, success_codes, config)
+
         
     def _initialize_day_colors(self) -> Dict[str, int]:
         """
@@ -115,7 +146,7 @@ class DiscordPlatform(Platform):
         Returns:
             Dictionary mapping day names to Discord color integers
         """
-        return get_day_colors(PLATFORM_DISCORD, True)
+        return get_day_colors(PLATFORM_DISCORD, self.config.start_week_on_monday)
     
     def format_day(self, day: Day) -> Dict[str, Any]:
         """
@@ -130,15 +161,26 @@ class DiscordPlatform(Platform):
         # Get color for this day
         color = self.day_colors.get(day.day_name, 0)
         
+        # Format TV and movie events
+        tv_formatted = [
+            self.format_tv_event(event, self.config.passed_event_handling) 
+            for event in day.tv_events
+        ]
+        
+        movie_formatted = [
+            self.format_movie_event(event, self.config.passed_event_handling) 
+            for event in day.movie_events
+        ]
+        
         # Combine tv and movie listings
         description = ""
-        if day.tv_events:
-            description += "\n".join(day.tv_events)
-            if day.movie_events:
+        if tv_formatted:
+            description += "\n".join(tv_formatted)
+            if movie_formatted:
                 description += "\n\n"
         
-        if day.movie_events:
-            description += "**MOVIES**\n" + "\n".join(day.movie_events)
+        if movie_formatted:
+            description += "**MOVIES**\n" + "\n".join(movie_formatted)
         
         return {
             "title": day.name,
@@ -171,16 +213,78 @@ class DiscordPlatform(Platform):
         mention_text = ""
         if hasattr(self, 'config') and self.config.discord_mention_role_id:
             role_id = self.config.discord_mention_role_id
-            mention_text = f"\n\n<@&{role_id}> "
+            mention_text = f"\n<@&{role_id}> "
     
-        
         return {
             "content": f"{header_text}\n\n{subheader}{mention_text}"
         }
+    
+    def format_tv_event(self, event_item: EventItem, passed_event_handling: str) -> str:
+        """
+        Format a TV event for Discord
+        
+        Args:
+            event_item: EventItem to format
+            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
+            
+        Returns:
+            Formatted string for Discord
+        """
+        # Build the formatted string
+        if event_item.time_str:
+            if event_item.episode_title:
+                formatted = f"{event_item.time_str}: **{event_item.show_name}** - {event_item.episode_number} - *{event_item.episode_title}*"
+            elif event_item.episode_number:
+                formatted = f"{event_item.time_str}: **{event_item.show_name}** - {event_item.episode_number}"
+            else:
+                formatted = f"{event_item.time_str}: **{event_item.summary}**"
+        else:
+            if event_item.episode_title:
+                formatted = f"**{event_item.show_name}** - {event_item.episode_number} - *{event_item.episode_title}*"
+            elif event_item.episode_number:
+                formatted = f"**{event_item.show_name}** - {event_item.episode_number}"
+            else:
+                formatted = f"**{event_item.summary}**"
+        
+        # Add premiere emoji if applicable
+        if event_item.is_premiere:
+            formatted += "  🎉"
+        
+        # Apply strikethrough for past events if configured
+        if event_item.is_past and passed_event_handling == "STRIKE":
+            formatted = f"~~{formatted}~~"
+        
+        return formatted
+    
+    def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
+        """
+        Format a movie event for Discord
+        
+        Args:
+            event_item: EventItem to format
+            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
+            
+        Returns:
+            Formatted string for Discord
+        """
+        # Format movie title
+        formatted = f"🎬  **{event_item.summary}**"
+        
+        # Apply strikethrough for past events if configured
+        if event_item.is_past and passed_event_handling == "STRIKE":
+            formatted = f"~~{formatted}~~"
+        
+        return formatted
 
 
 class SlackPlatform(Platform):
     """Slack implementation of Platform"""
+    
+    def __init__(self, webhook_url: str, webhook_service: WebhookService, 
+                 success_codes: List[int], config: Config):
+        """Initialize with configuration"""
+        super().__init__(webhook_url, webhook_service, success_codes, config)
+        # self.config = config
     
     def _initialize_day_colors(self) -> Dict[str, str]:
         """
@@ -189,7 +293,7 @@ class SlackPlatform(Platform):
         Returns:
             Dictionary mapping day names to Slack color hex strings
         """
-        return get_day_colors(PLATFORM_SLACK, True)
+        return get_day_colors(PLATFORM_SLACK, self.config.start_week_on_monday)
     
     def format_day(self, day: Day) -> Dict[str, Any]:
         """
@@ -204,13 +308,31 @@ class SlackPlatform(Platform):
         # Get color for this day
         color = self.day_colors.get(day.day_name, "#000000")
         
-        # Format day content for Slack
-        day_content = self._format_slack_day_content(day)
+        # Format TV and movie events
+        tv_formatted = [
+            self.format_tv_event(event, self.config.passed_event_handling) 
+            for event in day.tv_events
+        ]
+        
+        movie_formatted = [
+            self.format_movie_event(event, self.config.passed_event_handling) 
+            for event in day.movie_events
+        ]
+        
+        # Combine tv and movie listings
+        text = ""
+        if tv_formatted:
+            text += "\n".join(tv_formatted)
+            if movie_formatted:
+                text += "\n\n"
+        
+        if movie_formatted:
+            text += "*MOVIES*\n" + "\n".join(movie_formatted)
         
         return {
             "color": color,
             "title": day.name,
-            "text": day_content,
+            "text": text,
             "mrkdwn_in": ["text"]
         }
     
@@ -270,55 +392,61 @@ class SlackPlatform(Platform):
             ]
         }
     
-    def _format_slack_day_content(self, day: Day) -> str:
+    def format_tv_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """
-        Format day content for Slack
+        Format a TV event for Slack
         
         Args:
-            day: Day to format
+            event_item: EventItem to format
+            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
             
         Returns:
-            Formatted day content string
+            Formatted string for Slack
         """
-        # First combine tv and movie events
-        day_content = ""
-        if day.tv_events:
-            day_content += "\n".join(day.tv_events)
-            if day.movie_events:
-                day_content += "\n\n"
-        
-        if day.movie_events:
-            day_content += "**MOVIES**\n" + "\n".join(day.movie_events)
-        
-        # Now format for Slack
-        formatted_lines = []
-        for line in day_content.split('\n'):
-            if line.startswith("**MOVIES"):
-                formatted_lines.append(line.replace("**", "*"))
-                continue
-                
-            # For TV shows with time
-            if ":" in line and "**" in line:
-                parts = line.split(":", 1)
-                time_part = parts[0] + ":"
-                content_part = parts[1].strip()
-                
-                # Extract the show name while preserving bold
-                if " - " in content_part:
-                    show_and_episode = content_part.split(" - ", 1)
-                    show_name = show_and_episode[0]
-                    episode_info = " - " + show_and_episode[1]
-                    # Make sure only show name is bold in Slack
-                    if "**" in show_name:
-                        show_name = show_name.replace("**", "*")
-                    formatted_line = f"{time_part} {show_name}{episode_info}"
-                else:
-                    # If no dash separator, just convert all bold markers
-                    formatted_line = line.replace("**", "*")
-                
-                formatted_lines.append(formatted_line)
+        # Build the formatted string
+        if event_item.time_str:
+            time_part = f"{event_item.time_str}: "
+            
+            if event_item.episode_title:
+                formatted = f"{time_part}*{event_item.show_name}* - {event_item.episode_number} - _{event_item.episode_title}_"
+            elif event_item.episode_number:
+                formatted = f"{time_part}*{event_item.show_name}* - {event_item.episode_number}"
             else:
-                # For lines without time or special format
-                formatted_lines.append(line.replace("**", "*"))
+                formatted = f"{time_part}*{event_item.summary}*"
+        else:
+            if event_item.episode_title:
+                formatted = f"*{event_item.show_name}* - {event_item.episode_number} - _{event_item.episode_title}_"
+            elif event_item.episode_number:
+                formatted = f"*{event_item.show_name}* - {event_item.episode_number}"
+            else:
+                formatted = f"*{event_item.summary}*"
         
-        return "\n".join(formatted_lines)
+        # Add premiere emoji if applicable
+        if event_item.is_premiere:
+            formatted += "  🎉"
+        
+        # Apply strikethrough for past events if configured
+        if event_item.is_past and passed_event_handling == "STRIKE":
+            formatted = f"~{formatted}~"
+        
+        return formatted
+    
+    def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
+        """
+        Format a movie event for Slack
+        
+        Args:
+            event_item: EventItem to format
+            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
+            
+        Returns:
+            Formatted string for Slack
+        """
+        # Format movie title
+        formatted = f"🎬  *{event_item.summary}*"
+        
+        # Apply strikethrough for past events if configured
+        if event_item.is_past and passed_event_handling == "STRIKE":
+            formatted = f"~{formatted}~"
+        
+        return formatted

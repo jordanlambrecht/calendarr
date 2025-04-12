@@ -9,12 +9,9 @@ from collections import defaultdict
 
 from models.day import Day
 from models.event import Event
+from models.event_item import EventItem
 from config.settings import Config
 from utils.date_utils import get_days_order, get_short_day_name, parse_event_datetime, format_time
-from utils.format_utils import (
-    apply_formatting, process_movie_event
-)
-
 
 logger = logging.getLogger("service_formatter")
 
@@ -31,8 +28,6 @@ class FormatterService:
         """
         self.config = config
     
-
-    # This has unused vars but I'm lazy
     def process_events(self, events: List[Event], 
                      start_date: datetime, 
                      end_date: datetime) -> Tuple[List[Day], Dict[str, int]]:
@@ -49,8 +44,6 @@ class FormatterService:
         """
         if not events:
             return [], {"tv_count": 0, "movie_count": 0, "premiere_count": 0}
-
-        events = self._deduplicate_events(events)
         
         # Count events by type
         tv_count = sum(1 for e in events if e.source_type == "tv")
@@ -69,39 +62,23 @@ class FormatterService:
                 logger.debug(f"⏪ Skipping past event: {event.summary}")
                 continue
             
-            # Format event based on type
-            if event.source_type == "tv":
-                formatted_entry = self._process_tv_event(event)
-                
-                # Count premieres
-                if "🎉" in formatted_entry:
-                    premiere_count += 1
-                
-                # Apply strikethrough for past events if configured
-                if event.is_past and self.config.passed_event_handling == "STRIKE":
-                    formatted_entry = apply_formatting(
-                        formatted_entry, 
-                        "strikethrough", 
-                        "discord"  # This will be platform-specific when I have more time
-                    )
-                    
-                days_data[event.day_key]["tv"].append(formatted_entry)
+            # Create EventItem from Event
+            event_item = self._create_event_item(event)
+            
+            # Count premieres
+            if event_item.is_premiere:
+                premiere_count += 1
+            
+            # Add to the appropriate day and type
+            if event_item.is_tv:
+                days_data[event.day_key]["tv"].append(event_item)
             else:  # movie
-                formatted_entry = process_movie_event(event.summary)
-                
-                if event.is_past and self.config.passed_event_handling == "STRIKE":
-                    formatted_entry = apply_formatting(
-                        formatted_entry, 
-                        "strikethrough", 
-                        "discord"  # This will be platform-specific when I have more time
-                    )
-                        
-                days_data[event.day_key]["movie"].append(formatted_entry)
+                days_data[event.day_key]["movie"].append(event_item)
         
         # Sort days by day of week
         day_order = get_days_order(self.config.start_week_on_monday)
         
-        # Convert to Day objects (without colors)
+        # Convert to Day objects
         days = []
         
         for day_key, content in sorted(days_data.items(), 
@@ -123,6 +100,7 @@ class FormatterService:
             "movie_count": movie_count,
             "premiere_count": premiere_count
         }
+        
     def _deduplicate_events(self, events: List[Event]) -> List[Event]:
         """
         Deduplicate events with the same summary and day
@@ -155,15 +133,15 @@ class FormatterService:
             
         return list(unique_events.values())
     
-    def _process_tv_event(self, event: Event) -> str:
+    def _create_event_item(self, event: Event) -> EventItem:
         """
-        Format TV event for display
+        Create an EventItem from an Event
         
         Args:
-            event: TV event to format
+            event: Event to process
             
         Returns:
-            Formatted TV event string
+            EventItem instance
         """
         summary = event.summary
         start = event.start_time
@@ -177,55 +155,43 @@ class FormatterService:
         # Parse datetime components
         dt_parts = parse_event_datetime(start, self.config.timezone)
         
+        # Format time string if display_time is enabled
+        time_str = None
+        if display_time:
+            time_str = format_time(
+                dt_parts["hour"], 
+                dt_parts["minute"], 
+                use_24_hour=use_24_hour,
+                add_leading_zero=add_leading_zero
+            )
+        
         # Split show name from episode details if possible
-        parts = re.split(r'\s+-\s+', summary, 1)
-        if len(parts) == 2:
-            show_name = parts[0]
-            episode_info = parts[1]
-            
-            # Split again by ' - ' to separate episode number from title
-            sub_parts = re.split(r'\s+-\s+', episode_info, 1)
-            if len(sub_parts) == 2:
-                episode_num, episode_title = sub_parts
-            else:
-                episode_num = episode_info
-                episode_title = ""
-
-            if display_time:
-                time_str = format_time(
-                    dt_parts["hour"], 
-                    dt_parts["minute"], 
-                    "discord",  # This will be platform-specific when I have more time
-                    use_24_hour, 
-                    add_leading_zero
-                )
+        show_name = summary
+        episode_number = None
+        episode_title = None
+        
+        # For TV shows, try to parse show, episode number, and title
+        if event.source_type == "tv":
+            parts = re.split(r'\s+-\s+', summary, 1)
+            if len(parts) == 2:
+                show_name = parts[0]
+                episode_info = parts[1]
                 
-                if is_premiere:
-                    return f"{time_str}: **{show_name}** - {episode_num} - *{episode_title}*  🎉"
+                # Split again by ' - ' to separate episode number from title
+                sub_parts = re.split(r'\s+-\s+', episode_info, 1)
+                if len(sub_parts) == 2:
+                    episode_number, episode_title = sub_parts
                 else:
-                    return f"{time_str}: **{show_name}** - {episode_num} - *{episode_title}*"
-            else:
-                if is_premiere:
-                    return f"**{show_name}** - {episode_num} - *{episode_title}* 🎉"
-                else:
-                    return f"**{show_name}** - {episode_num} - *{episode_title}*"
-        else:
-            # No dash separator found, just display as is
-            if display_time:
-                time_str = format_time(
-                    dt_parts["hour"], 
-                    dt_parts["minute"], 
-                    "discord",  # This will be platform-specific when I have more time
-                    use_24_hour, 
-                    add_leading_zero
-                )
-                
-                if is_premiere:
-                    return f"{time_str}: **{summary}**  🎉"
-                else:
-                    return f"{time_str}: **{summary}**"
-            else:
-                if is_premiere:
-                    return f" **{summary}**  🎉"
-                else:
-                    return f"**{summary}**"
+                    episode_number = episode_info
+        
+        # Create the EventItem
+        return EventItem(
+            summary=summary,
+            source_type=event.source_type,
+            is_premiere=is_premiere,
+            is_past=event.is_past,
+            time_str=time_str,
+            show_name=show_name,
+            episode_number=episode_number,
+            episode_title=episode_title
+        )

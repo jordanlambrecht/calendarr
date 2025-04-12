@@ -5,14 +5,16 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
+from models.event_item import EventItem
+
 
 @dataclass
 class Day:
     """Represents a day with TV and movie events"""
     
     name: str  # something like "Monday, Jan 01"
-    tv_events: List[str] = field(default_factory=list)
-    movie_events: List[str] = field(default_factory=list)
+    tv_events: List[EventItem] = field(default_factory=list)
+    movie_events: List[EventItem] = field(default_factory=list)
     date: Optional[datetime] = None  # Full datetime object
     
     @property
@@ -53,7 +55,7 @@ class Day:
         Returns:
             Number of premieres
         """
-        return sum(1 for event in self.tv_events if "🎉" in event)
+        return sum(1 for event in self.tv_events if event.is_premiere)
     
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -64,34 +66,30 @@ class Day:
         """
         return {
             "name": self.name,
-            "tv": self.tv_events,
-            "movie": self.movie_events,
+            "tv": [self._event_item_to_dict(e) for e in self.tv_events],
+            "movie": [self._event_item_to_dict(e) for e in self.movie_events],
             "date": self.date.isoformat() if self.date else None,
             "total_events": self.total_events,
             "premiere_count": self.premiere_count
         }
     
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Day':
+    def _event_item_to_dict(self, event_item: EventItem) -> Dict[str, Any]:
         """
-        Create Day from dictionary
+        Convert an EventItem to dictionary
         
         Args:
-            data: Dictionary with day data
+            event_item: EventItem to convert
             
         Returns:
-            Day instance
+            Dictionary representation
         """
-        date = None
-        if data.get("date"):
-            try:
-                date = datetime.fromisoformat(data["date"])
-            except (ValueError, TypeError):
-                pass
-                
-        return cls(
-            name=data.get("name", ""),
-            tv_events=data.get("tv", []),
-            movie_events=data.get("movie", []),
-            date=date
-        )
+        return {
+            "summary": event_item.summary,
+            "source_type": event_item.source_type,
+            "is_premiere": event_item.is_premiere,
+            "is_past": event_item.is_past,
+            "time_str": event_item.time_str,
+            "show_name": event_item.show_name,
+            "episode_number": event_item.episode_number,
+            "episode_title": event_item.episode_title
+        }

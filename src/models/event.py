@@ -5,7 +5,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, date
 import re
 import pytz
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
+import icalendar # Add this import
 
 from constants import PREMIERE_PATTERN
 
@@ -54,7 +55,7 @@ class Event:
         """
         return self.start_time.strftime('%A, %b %d')
     
-    def get_event_key(self) -> tuple:
+    def get_event_key(self) -> Tuple[str, date]:
         """
         Get a unique key for identifying this event
         
@@ -93,20 +94,17 @@ class Event:
         return hash(self.get_event_key())
     
     @classmethod
-    def from_ical_event(cls, event: Dict[str, Any], timezone: pytz.timezone) -> 'Event':
+    def from_ical_event(cls, event: icalendar.Event, timezone: pytz.timezone, source_type: str) -> 'Event':
         """
-        Create Event from an iCal event
+        Create an Event from an icalendar event
         
         Args:
-            event: iCal event dictionary
-            timezone: Timezone to localize datetime
+            event: icalendar event object
+            timezone: Timezone object
+            source_type: "tv" or "movie"
             
         Returns:
             Event instance
-            
-        Raises:
-            ValueError: If event doesn't have required fields
-            TypeError: If event datetime is invalid
         """
         # Get start time
         start_dt = event.get('DTSTART')
@@ -116,7 +114,6 @@ class Event:
         start = start_dt.dt
         
         # Get event details
-        source_type = event.get("SOURCE_TYPE", "tv")
         summary = event.get('SUMMARY', 'Untitled Event')
         
         # Handle date-only events
@@ -135,9 +132,13 @@ class Event:
         else:
             raise TypeError(f"Unexpected datetime type: {type(start)}")
         
+        # Determine if it's a premiere
+        is_premiere = bool(re.search(PREMIERE_PATTERN, summary, re.IGNORECASE))
+        
+        # Create Event object
         return cls(
             summary=summary,
             start_time=start,
-            source_type=source_type,
+            source_type=source_type, # Use passed source_type
             raw_event=event
         )

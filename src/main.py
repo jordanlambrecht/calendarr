@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
+# src/main.py
+
 import logging
-import argparse
 import traceback
 
 from config.settings import load_config_from_env
@@ -13,23 +15,16 @@ logger = logging.getLogger("main")
 def main():
     """Main function to process calendar events and send to messaging platforms"""
     
-    # Parse command line arguments (not super helpful rn)
-    parser = argparse.ArgumentParser(description='Process calendar events and send to Discord/Slack')
-    parser.add_argument('--debug', action='store_true', help='Run in debug mode')
-    args = parser.parse_args()
-    
-
     try:
         # Load config
         config = load_config_from_env()
     except Exception as e:
-        print(f"Error loading configuration: {e}")
+        logger.error(f"Error loading configuration: {e}")
         return False
-
 
     try:
         # Calculate date range
-        logger.debug(f"🔍  loading date ranges from config")
+        logger.debug(f"🔍  Loading date ranges from config")
         start_date, end_date = calculate_date_range(
             config.calendar_range,
             config.start_week_on_monday,
@@ -37,8 +32,9 @@ def main():
         )
     except Exception as e:
         logger.error(f"Error calculating date range: {e}")
+        return False
 
-    # Initialize
+    # Initialize services
     calendar_service = CalendarService(config)
     formatter_service = FormatterService(config)
     platform_service = PlatformService(config)
@@ -51,8 +47,7 @@ def main():
         events_count = len(events)
         logger.info(f"📦 Found {events_count} events")
         
-
-        # Process events into formatted Day objects
+        # Process events into Day objects with EventItems
         days, events_summary = formatter_service.process_events(
             events, 
             start_date, 
@@ -70,7 +65,6 @@ def main():
         # Check if all platforms succeeded
         all_success = all(results.values()) if results else False
         
-
         logger.info("✅ Script completed successfully" if all_success else "⚠️ Script completed with errors")
         return all_success
         

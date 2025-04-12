@@ -51,7 +51,8 @@ class PlatformService:
             platforms[PLATFORM_SLACK] = SlackPlatform(
                 self.config.slack_webhook_url,
                 self.webhook_service,
-                SLACK_SUCCESS_CODES
+                SLACK_SUCCESS_CODES,
+                self.config
             )
             
         return platforms

@@ -6,7 +6,7 @@ import requests
 import icalendar
 import recurring_ical_events
 from datetime import datetime
-from typing import List
+from typing import List, Dict, Set
 
 from models.event import Event
 from config.settings import Config, CalendarUrl
@@ -71,7 +71,7 @@ class CalendarService:
                    f"{start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}")
         
         try:
-            response = requests.get(url, timeout=30)
+            response = requests.get(url, timeout=self.config.http_timeout)
             response.raise_for_status()
         except requests.RequestException as e:
             logger.error(f"Failed to fetch iCal from {url}: {str(e)}")
@@ -88,12 +88,10 @@ class CalendarService:
             # Process events
             processed_events = []
             for event in ical_events:
-                # Add source type to event
-                event["SOURCE_TYPE"] = source_type
-                
                 # Convert to Event object
                 try:
-                    processed_event = Event.from_ical_event(event, self.config.timezone_obj)
+                    # Pass source_type to the factory method
+                    processed_event = Event.from_ical_event(event, self.config.timezone_obj, source_type)
                     
                     # Double-check it's in our date range
                     event_date = processed_event.start_time.date()

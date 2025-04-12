@@ -25,54 +25,7 @@ def pluralize(word: str, count: int, plural: str = None) -> str:
     return word if count == 1 else plural
 
 
-def apply_formatting(text: str, format_type: str, platform: str) -> str:
-    """
-    Apply platform-specific formatting
-    
-    Args:
-        text: Text to format
-        format_type: Type of formatting to apply
-        platform: Platform name
-        
-    Returns:
-        Formatted text
-    """
-    if format_type == "strikethrough":
-        return f"~~{text}~~" if platform == "discord" else f"~{text}~"
-    elif format_type == "bold":
-        return f"**{text}**" if platform == "discord" else f"*{text}*"
-    return text
 
-
-def process_movie_event(summary: str) -> str:
-    """
-    Format movie event for display
-    
-    Args:
-        summary: Movie title
-        
-    Returns:
-        Formatted movie string
-    """
-    return f"🎬  **{summary}**"
-
-
-def count_premieres(days_data: Dict) -> int:
-    """
-    Count the number of season premieres in the data
-    
-    Args:
-        days_data: Dictionary of days with events
-        
-    Returns:
-        Number of premieres
-    """
-    premiere_count = 0
-    for day_content in days_data.values():
-        for tv_item in day_content["tv"]:
-            if "🎉" in tv_item:
-                premiere_count += 1
-    return premiere_count
 
 
 def build_content_summary_parts(tv_count: int, movie_count: int, 
