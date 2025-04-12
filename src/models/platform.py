@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # src/models/platform.py
 
+import re
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 from datetime import datetime
@@ -15,9 +16,14 @@ from utils.format_utils import (
 )
 from constants import (
     PLATFORM_DISCORD,
-    PLATFORM_SLACK
+    PLATFORM_SLACK,
+    EPISODE_PATTERN
 )
 from services.webhook_service import WebhookService
+
+# Regex to identify common SxxExx or NNNxNNN patterns (case-insensitive)
+# Allows S prefix, 1-4 digits for season, E or x separator, 1-4 digits for episode
+EPISODE_PATTERN = re.compile(EPISODE_PATTERN, re.IGNORECASE)
 
 logger = logging.getLogger("service_platform")
 
@@ -229,59 +235,50 @@ class  DiscordPlatform(Platform):
     
     def format_tv_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """
-        Format a TV event for Discord
-        
+        Format a TV event
+
         Args:
             event_item: EventItem to format
             passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
-            
-        Returns:
-            Formatted string for Discord
         """
-        # Build the formatted string
-        if event_item.time_str:
-            if event_item.episode_title:
-                formatted = f"{event_item.time_str}: **{event_item.show_name}** - {event_item.episode_number} - *{event_item.episode_title}*"
-            elif event_item.episode_number:
-                formatted = f"{event_item.time_str}: **{event_item.show_name}** - {event_item.episode_number}"
+        time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
+        show_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
+        formatted_show = f"**{show_name_to_format}**" # Discord uses **bold**
+
+        episode_details = ""
+        number = event_item.episode_number
+        title = event_item.episode_title
+
+        if title:
+            is_standard_ep_num = bool(number and EPISODE_PATTERN.match(number))
+            if is_standard_ep_num:
+                # Standard format: Show - SxxExx - *Title*
+                episode_details = f" - {number} - *{title}*"
             else:
-                formatted = f"{event_item.time_str}: **{event_item.summary}**"
-        else:
-            if event_item.episode_title:
-                formatted = f"**{event_item.show_name}** - {event_item.episode_number} - *{event_item.episode_title}*"
-            elif event_item.episode_number:
-                formatted = f"**{event_item.show_name}** - {event_item.episode_number}"
+                # Non-standard number: Show - *Number - Title*
+                episode_details = f" - *{number} - {title}*"
+        elif number:
+            is_standard_ep_num = bool(EPISODE_PATTERN.match(number))
+            if is_standard_ep_num:
+                # Standard number only: Show - SxxExx
+                episode_details = f" - {number}"
             else:
-                formatted = f"**{event_item.summary}**"
-        
-        # Add premiere emoji if applicable
+                # Non-standard number only: Show - *Number*
+                episode_details = f" - *{number}*"
+
+        formatted = f"{time_prefix}{formatted_show}{episode_details}"
         if event_item.is_premiere:
-            formatted += "  🎉"
-        
-        # Apply strikethrough for past events if configured
+            formatted += " 🎉"
         if event_item.is_past and passed_event_handling == "STRIKE":
-            formatted = f"~~{formatted}~~"
-        
-        return formatted
+            formatted = f"~~{formatted}~~" # Discord uses ~~strike~~
+
+        return formatted.strip()
     
     def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
-        """
-        Format a movie event for Discord
-        
-        Args:
-            event_item: EventItem to format
-            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
-            
-        Returns:
-            Formatted string for Discord
-        """
-        # Format movie title
-        formatted = f"🎬  **{event_item.summary}**"
-        
-        # Apply strikethrough for past events if configured
+        """Format a movie event for Discord"""
+        formatted = f"🎬  **{event_item.summary}**" # Discord uses **bold**
         if event_item.is_past and passed_event_handling == "STRIKE":
-            formatted = f"~~{formatted}~~"
-        
+            formatted = f"~~{formatted}~~" # Discord uses ~~strike~~
         return formatted
 
 
@@ -402,59 +399,44 @@ class SlackPlatform(Platform):
     
     def format_tv_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """
-        Format a TV event for Slack
-        
-        Args:
-            event_item: EventItem to format
-            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
-            
-        Returns:
-            Formatted string for Slack
+        Format a TV event for Slack, applying italics based on content.
         """
-        # Build the formatted string
-        if event_item.time_str:
-            time_part = f"{event_item.time_str}: "
-            
-            if event_item.episode_title:
-                formatted = f"{time_part}*{event_item.show_name}* - {event_item.episode_number} - _{event_item.episode_title}_"
-            elif event_item.episode_number:
-                formatted = f"{time_part}*{event_item.show_name}* - {event_item.episode_number}"
+        time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
+        show_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
+        formatted_show = f"*{show_name_to_format}*" # Slack uses *bold*
+
+        episode_details = ""
+        number = event_item.episode_number
+        title = event_item.episode_title
+
+        if title:
+            is_standard_ep_num = bool(number and EPISODE_PATTERN.match(number))
+            if is_standard_ep_num:
+                # Standard format: Show - SxxExx - _Title_
+                episode_details = f" - {number} - _{title}_"
             else:
-                formatted = f"{time_part}*{event_item.summary}*"
-        else:
-            if event_item.episode_title:
-                formatted = f"*{event_item.show_name}* - {event_item.episode_number} - _{event_item.episode_title}_"
-            elif event_item.episode_number:
-                formatted = f"*{event_item.show_name}* - {event_item.episode_number}"
+                # Non-standard number: Show - _Number - Title_
+                episode_details = f" - _{number} - {title}_"
+        elif number:
+            is_standard_ep_num = bool(EPISODE_PATTERN.match(number))
+            if is_standard_ep_num:
+                # Standard number only: Show - SxxExx
+                episode_details = f" - {number}"
             else:
-                formatted = f"*{event_item.summary}*"
-        
-        # Add premiere emoji if applicable
+                # Non-standard number only: Show - _Number_
+                episode_details = f" - _{number}_"
+
+        formatted = f"{time_prefix}{formatted_show}{episode_details}"
         if event_item.is_premiere:
-            formatted += "  🎉"
-        
-        # Apply strikethrough for past events if configured
+            formatted += " 🎉"
         if event_item.is_past and passed_event_handling == "STRIKE":
-            formatted = f"~{formatted}~"
-        
-        return formatted
+            formatted = f"~{formatted}~" # Slack uses ~strike~
+
+        return formatted.strip()
     
     def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
-        """
-        Format a movie event for Slack
-        
-        Args:
-            event_item: EventItem to format
-            passed_event_handling: How to handle passed events (DISPLAY, HIDE, STRIKE)
-            
-        Returns:
-            Formatted string for Slack
-        """
-        # Format movie title
-        formatted = f"🎬  *{event_item.summary}*"
-        
-        # Apply strikethrough for past events if configured
+        """Format a movie event for Slack"""
+        formatted = f"🎬  *{event_item.summary}*" # Slack uses *bold*
         if event_item.is_past and passed_event_handling == "STRIKE":
-            formatted = f"~{formatted}~"
-        
+            formatted = f"~{formatted}~" # Slack uses ~strike~
         return formatted

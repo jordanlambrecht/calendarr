@@ -8,6 +8,7 @@ Application-wide constants
 # Calendar & Event Parsing
 # ==============================================
 PREMIERE_PATTERN = r'[-\s](?:s\d+e0*1|(?:\d+x0*1))\b'
+EPISODE_PATTERN = r'^(S?\d{1,4}[Ex]\d{1,4})$'
 
 # ==============================================
 # API & HTTP Settings
