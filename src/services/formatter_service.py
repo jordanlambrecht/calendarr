@@ -14,7 +14,7 @@ from config.settings import Config
 from utils.date_utils import get_days_order, get_short_day_name, parse_event_datetime, format_time
 from constants import EVENT_TYPE_TV, EVENT_TYPE_MOVIE
 
-logger = logging.getLogger("service_formatter")
+logger = logging.getLogger("formatter_service")
 
 
 class FormatterService:

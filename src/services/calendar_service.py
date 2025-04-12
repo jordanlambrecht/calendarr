@@ -11,7 +11,7 @@ from typing import List
 from models.event import Event
 from config.settings import Config, CalendarUrl
 
-logger = logging.getLogger("service_cal")
+logger = logging.getLogger("calendar_service")
 
 
 class CalendarService:
