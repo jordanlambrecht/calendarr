@@ -15,9 +15,10 @@ from constants import (
     DEFAULT_RUN_ON_STARTUP, DEFAULT_SHOW_DATE_RANGE, DEFAULT_START_WEEK_ON_MONDAY,
     DEFAULT_DISPLAY_TIME, DEFAULT_USE_24_HOUR, VALID_PASSED_EVENT_HANDLING,
     VALID_CALENDAR_RANGE, DEFAULT_HEADER, DEFAULT_SCHEDULE_TYPE, DEFAULT_RUN_TIME,
-    DEFAULT_SCHEDULE_DAY, DEFAULT_LOG_DIR, DEFAULT_LOG_FILE, DEFAULT_LOG_BACKUP_COUNT,
+    DEFAULT_SCHEDULE_DAY, DEFAULT_LOG_DIR, DEFAULT_LOG_FILE, DEFAULT_LOG_BACKUP_COUNT, DEFAULT_DISCORD_MENTION_ROLE_ID,
     DEFAULT_LOG_MAX_SIZE_MB, DEFAULT_USE_SLACK, DEFAULT_USE_DISCORD,
-    EVENT_TYPE_TV, EVENT_TYPE_MOVIE, VALID_EVENT_TYPES
+    EVENT_TYPE_TV, EVENT_TYPE_MOVIE, VALID_EVENT_TYPES,
+    DEFAULT_DISCORD_HIDE_MENTION_INSTRUCTIONS
 )
 
 logger = logging.getLogger("config")
@@ -195,7 +196,7 @@ class LoggingSettings:
 
 @dataclass
 class Config:
-    """Application configuration"""
+    """Main Application configuration"""
     
     # Webhook settings
     discord_webhook_url: Optional[str] = None
@@ -210,7 +211,8 @@ class Config:
     deduplicate_events: bool = DEFAULT_DEDUPLICATE_EVENTS
     
     # Discord-specific settings
-    discord_mention_role_id: Optional[str] = None
+    discord_mention_role_id: Optional[str] = DEFAULT_DISCORD_MENTION_ROLE_ID
+    discord_hide_mention_instructions: bool = DEFAULT_DISCORD_HIDE_MENTION_INSTRUCTIONS
     
     # Calendar settings
     calendar_urls: List[CalendarUrl] = field(default_factory=list)
@@ -587,16 +589,34 @@ def load_config_from_env() -> Config:
             slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
             use_discord = get_env_bool("USE_DISCORD", DEFAULT_USE_DISCORD)
             use_slack = get_env_bool("USE_SLACK", DEFAULT_USE_SLACK)
-            discord_mention_role_id=os.environ.get("MENTION_ROLE_ID")
+
+            # --- Add Fallback Logic for Role ID ---
+            # THIS WILL EVENTUALLY BE REMOVED IN FUTURE RELEASES. IT'S JUST A TEMPORARY FIX 
+            discord_mention_role_id = os.environ.get("DISCORD_MENTION_ROLE_ID")
+            role_id_source = "DISCORD_MENTION_ROLE_ID"
+            if not discord_mention_role_id:
+                # If new variable is not set, try the old one
+                discord_mention_role_id = os.environ.get("MENTION_ROLE_ID", DEFAULT_DISCORD_MENTION_ROLE_ID)
+                if discord_mention_role_id != DEFAULT_DISCORD_MENTION_ROLE_ID:
+                    role_id_source = "MENTION_ROLE_ID (fallback)"
+                else:
+                    role_id_source = "Default" # If neither new nor old is set
+            # --- End Fallback Logic ---
+
+            discord_hide_mention_instructions=get_env_bool("DISCORD_HIDE_MENTION_INSTRUCTIONS", DEFAULT_DISCORD_HIDE_MENTION_INSTRUCTIONS)
+
             logger.debug(f"📋  Discord enabled: {use_discord}, webhook configured: {'yes' if discord_webhook_url else 'no'}")
             logger.debug(f"📋  Slack enabled: {use_slack}, webhook configured: {'yes' if slack_webhook_url else 'no'}")
-            logger.debug(f"📋  Discord mention role: {discord_mention_role_id}")
+            # Update log message to show which variable was used
+            logger.debug(f"📋  Discord mention role: {discord_mention_role_id} (Source: {role_id_source})")
+            logger.debug(f"📋  Hide Discord mention role message: {discord_hide_mention_instructions}")
         except Exception as e:
             logger.error(f"Error loading webhook settings: {e}")
             logger.debug(f"❌  Exception details: {traceback.format_exc()}")
             discord_webhook_url = None
             slack_webhook_url = None
-            discord_mention_role_id = None
+            discord_mention_role_id = DEFAULT_DISCORD_MENTION_ROLE_ID
+            discord_hide_mention_instructions = DEFAULT_DISCORD_HIDE_MENTION_INSTRUCTIONS
             use_discord = DEFAULT_USE_DISCORD
             use_slack = DEFAULT_USE_SLACK
 
@@ -651,6 +671,7 @@ def load_config_from_env() -> Config:
                 use_discord=use_discord,
                 use_slack=use_slack,
                 discord_mention_role_id=discord_mention_role_id,
+                discord_hide_mention_instructions=discord_hide_mention_instructions,
                 custom_header=custom_header,
                 show_date_range=show_date_range,
                 start_week_on_monday=start_week_on_monday,

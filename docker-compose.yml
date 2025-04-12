@@ -6,8 +6,8 @@ name: calendarr
 # ╚══════════════════════════════════════╝
 services:
  calendarr:
-    # image: ghcr.io/jordanlambrecht/calendarr:latest
-    build: .
+    image: ghcr.io/jordanlambrecht/calendarr:latest
+    # build: .
     restart: "unless-stopped"
     container_name: calendarr
     environment:
@@ -33,7 +33,7 @@ services:
         }]
       CUSTOM_HEADER: TV Guide - Shows and Movies airing this week
       SHOW_DATE_RANGE: true
-      DEBUG: true
+      DEBUG: false
       START_WEEK_ON_MONDAY: true
       TZ: "America/Chicago"
       DISCORD_MENTION_ROLE_ID: ${MENTION_ROLE_ID}

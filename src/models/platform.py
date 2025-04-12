@@ -19,7 +19,7 @@ from constants import (
 )
 from services.webhook_service import WebhookService
 
-logger = logging.getLogger("platform")
+logger = logging.getLogger("service_platform")
 
 
 class Platform(ABC):
@@ -211,10 +211,18 @@ class  DiscordPlatform(Platform):
         subheader = format_subheader_text(tv_count, movie_count, premiere_count)
 
         mention_text = ""
-        if hasattr(self, 'config') and self.config.discord_mention_role_id:
-            role_id = self.config.discord_mention_role_id
-            mention_text = f"\n<@&{role_id}> "
-    
+        role_id = self.config.discord_mention_role_id
+        hide_instructions = self.config.discord_hide_mention_instructions
+
+
+        logger.debug(f"Discord mention check: Role ID='{role_id}', Hide Instructions='{hide_instructions}' (Type: {type(hide_instructions)})")
+
+        if role_id: # Check if role_id is not None and not empty
+            mention_text = f"\n<@&{role_id}>"
+            # Simple boolean check now works
+            if not hide_instructions:
+                mention_text += "\n_If you'd like to be notified when new content is available, join this role!_"
+
         return {
             "content": f"{header_text}\n\n{subheader}{mention_text}"
         }
