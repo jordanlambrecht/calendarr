@@ -3,14 +3,44 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
 ## [1.4.0] 2025-04-12
 
 ### Added
 - Event deduplication feature to prevent duplicate entries when using multiple Sonarr/Radarr instances
 - New configuration option `DEDUPLICATE_EVENTS` to control deduplication (defaults to true)
+- pyproject.toml to make the snoots happy
+- New `EventItem` class to provide a structured representation of events for display
+- Discord Mentions now provide instructions on how a user can be notified
+- Configuration option `DISCORD_HIDE_MENTION_INSTRUCTIONS` to hide the help text below Discord role mentions
+- Fallback support for `MENTION_ROLE_ID` environment variable for backward compatibility.
+- Markdown styling constants (`DISCORD_BOLD_START`, `SLACK_ITALIC_END`, etc.) to `constants.py` for easier maintenance.
+- `TIMEZONE_NAME_MAP` in constants to provide user-friendly names for common timezones (e.g., "Central Time" for "America/Chicago").
+- Configuration option `SHOW_TIMEZONE_IN_SUBHEADER` to display the configured timezone in the header message. (Addresses #6)
+- Refactored formatting functions to use new markdown styling constants.
+
+
+### Changed
+- Refactored platform-specific formatting to properly separate content from presentation
+- Enhanced `Event` model with comparison methods for reliable deduplication
+- Updated `Day` class to store structured event data instead of pre-formatted strings
+- Improved formatting of processed event summary log message.
 
 ### Fixed
-- Issue with duplicate show entries appearing when using multiple Sonarr instances [#5](https://github.com/jordanlambrecht/calendarr/issues/5)
+- **Discord Embed Size Limit:** Implemented "smart batching" for Discord messages. Embeds are now grouped intelligently to stay under the 6000-character payload limit and 10-embed count limit, preventing failures on large weekly schedules while minimizing message spam. (Fixes [#3](https://github.com/jordanlambrecht/calendarr/issues/3))
+- **Improved TV event formatting (Discord & Slack):** Correctly applies italics to descriptive episode details (like dates, guest names, or non-standard identifiers) while leaving standard `SxxExx` numbers unitalicized. This fixes inconsistent bolding/italics, especially for daily shows. (Fixes [#4](https://github.com/jordanlambrecht/calendarr/issues/4))
+- Correctly generate `Day.name` when creating `Day` objects in `FormatterService`.
+- **Deduplication: Issue with duplicate show entries appearing when using multiple Sonarr instances** (Fixes [#5](https://github.com/jordanlambrecht/calendarr/issues/5))
+- Removed incorrect `end_time` validation from `Event.__post_init__`.
+- Pass `source_type` correctly when creating `Event` objects instead of modifying raw iCal event data.
+- Platform-specific formatting logic that was previously hardcoded
+- Removed duplicate "Sending to..." log messages in `PlatformService`.
+- Correctly pass stats dictionary keys when calling `platform.format_header`.
+
+### Removed
+- Removed unused `--debug` command-line argument. Debug mode is controlled via the `DEBUG` environment variable.
+- Removed unused `build_content_summary_parts` and `join_content_parts` functions from `format_utils.py`.
 
 ## [1.3.0] 2025-04-07
 

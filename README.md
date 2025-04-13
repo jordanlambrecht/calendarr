@@ -55,27 +55,37 @@ docker run -d \
 
 ## 🛠️ Configuration
 
-| Environment Variable | Type | Description |
-|---------------------|-------------|-------|
-| `TZ` | Timezone for displaying show times | Uses tzdata names - Default: America/Chicago |
-| `DISCORD_WEBHOOK_URL` | String | *Required for Discord* Discord webhook URL |
-| `SLACK_WEBHOOK_URL` | String | *Required for Slack* Slack incoming webhook URL |
-| `USE_SLACK` | Boolean | Enable Slack integration (Default: false) |
-| `USE_DISCORD` | Boolean | Enable Discord integration (Default: true) |
-| `USE_24_HOUR` | Boolean | Use 24-hour time format (Default: false) |
-| `DISPLAY_TIME` | Boolean | Show release times in output (Default: true) |
-| `CALENDAR_URLS` | JSON Array | *Required* Array of calendar URLs and their types (tv/movie)|
-| `CUSTOM_HEADER` | String | Custom title for the message (default: "TV Guide") |
-| `SHOW_DATE_RANGE` | Boolean | Show date range in header (Default: true) |
-| `START_WEEK_ON_MONDAY` | Boolean | Whether the week should start on Monday (Default: true) |
-| `RUN_ON_STARTUP` | Boolean | Also run immediately once when container starts (Default: true) |
-| `RUN_TIME` | String | Time of day to run the script **Must be 24hr format** |
-| `DEBUG` | Boolean | Enable debug mode for additional logging (Default: false) |
-| `SCHEDULE_TYPE` | STRING | Either "DAILY" or "WEEKLY" |
-| `PASSED_EVENT_HANDLING` | String | How to display past events: "DISPLAY", "HIDE", or "STRIKE" (Default: "STRIKE") |
-| `CALENDAR_RANGE` | String | "AUTO", "DAY", or "WEEK" - controls how many days of events to show (Default: "AUTO"). *See Below* |
-| `MENTION_ROLE` | String | *Discord only* Role ID to mention in the subheader in Discord (Format: `123456789012345678`. Numbers only.) |
-| `DEDUPLICATE_EVENTS` | Boolean | Remove duplicate events from multiple sources (Optional. Default: true) |
+| Variable                              | Type    | Description                                                                                             |
+| :------------------------------------ | :------ | :------------------------------------------------------------------------------------------------------ |
+| `TZ`                                  | String  | Timezone (e.g., `America/New_York`)                                                                     |
+| `CALENDAR_URLS`                       | String  | JSON array of calendar URLs and types (e.g., `[{"url":"http://...","type":"tv"}]`)                       |
+| `USE_DISCORD`                         | Boolean | Enable Discord notifications (Optional. Default: `true`)                                                |
+| `DISCORD_WEBHOOK_URL`                 | String  | Discord webhook URL                                                                                     |
+| `USE_SLACK`                           | Boolean | Enable Slack notifications (Optional. Default: `false`)                                                 |
+| `SLACK_WEBHOOK_URL`                   | String  | Slack webhook URL                                                                                       |
+| `SCHEDULE_TYPE`                       | String  | `DAILY` or `WEEKLY` (Optional. Default: `WEEKLY`)                                                       |
+| `SCHEDULE_DAY`                        | String  | Day of week for weekly schedule (`0`-`6`, Sunday-Saturday) (Optional. Default: `1` - Monday)            |
+| `RUN_TIME`                            | String  | Time to run job (HH:MM) (Optional. Default: `09:00`)                                                    |
+| `CRON_SCHEDULE`                       | String  | Custom CRON expression (Overrides `SCHEDULE_TYPE`, `SCHEDULE_DAY`, `RUN_TIME`) (Optional)               |
+| `RUN_ON_STARTUP`                      | Boolean | Run the job immediately when the container starts (Optional. Default: `false`)                          |
+| `CUSTOM_HEADER`                       | String  | Custom header text (Optional. Default: `New Releases`)                                                  |
+| `SHOW_DATE_RANGE`                     | Boolean | Show the date range in the header (Optional. Default: `true`)                                           |
+| `SHOW_TIMEZONE_IN_SUBHEADER`          | Boolean | Show the configured timezone(Optional. Default: `false`) |
+| `USE_24_HOUR`                         | Boolean | Use 24-hour time format (Optional. Default: `true`)                                                     |
+| `ADD_LEADING_ZERO`                    | Boolean | Add leading zero to single-digit hours (Optional. Default: `true`)                                      |
+| `DISPLAY_TIME`                        | Boolean | Display the release time next to events (Optional. Default: `true`)                                     |
+| `START_WEEK_ON_MONDAY`                | Boolean | Use Monday as the start of the week for color rotation (Optional. Default: `true`)                      |
+| `PASSED_EVENT_HANDLING`               | String  | How to handle past events: `DISPLAY`, `HIDE`, `STRIKE` (Optional. Default: `DISPLAY`)                   |
+| `CALENDAR_RANGE`                      | String  | Date range to fetch: `DAY`, `WEEK`, `AUTO` (Optional. Default: `AUTO`)                                  |
+| `DISCORD_MENTION_ROLE_ID`             | String  | *Discord only* Role ID to mention (Format: `123456789012345678`. Numbers only.) (Optional)             |
+| `DISCORD_HIDE_MENTION_INSTRUCTIONS` | Boolean | *Discord only* Hide the instruction text below the role mention (Optional. Default: `false`)            |
+| `DEDUPLICATE_EVENTS`                  | Boolean | Remove duplicate events from multiple sources (Optional. Default: `true`)                               |
+| `HTTP_TIMEOUT`                        | Integer | Timeout in seconds for HTTP requests (Optional. Default: `30`)                                          |
+| `DEBUG`                               | Boolean | Enable debug logging (Optional. Default: `false`)                                                       |
+| `LOG_DIR`                             | String  | Directory to store log files (Optional. Default: `/app/logs`)                                           |
+| `LOG_FILE`                            | String  | Name of the log file (Optional. Default: `calendarr.log`)                                               |
+| `LOG_MAX_SIZE_MB`                     | Integer | Maximum size of a single log file in MB before rotation (Optional. Default: `1`)                        |
+| `LOG_BACKUP_COUNT`                    | Integer | Number of rotated log files to keep (Optional. Default: `15`)                                           |
 
 ## Schedule Configuration
 
@@ -150,7 +160,7 @@ If you're new to Docker, it's fairly easy to get this going. I won't post an in-
   - A .env file with your configuration (see example above)
   - A docker-compose.yml file with, at a minimum:
 
-  ```
+  ```yaml
   ---
   name: calendarr
   services:
@@ -160,7 +170,7 @@ If you're new to Docker, it's fairly easy to get this going. I won't post an in-
       container_name: calendarr
       environment:
         USE_DISCORD: "true"
-        DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+        DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL} # Reference the .env.example for more info
         CALENDAR_URLS: >
           [{
             "url":"${ICS_URL_SONARR_1}",
@@ -172,13 +182,15 @@ If you're new to Docker, it's fairly easy to get this going. I won't post an in-
           }]
         CUSTOM_HEADER: "TV Guide - What's Up This Week"
         TZ: "America/Chicago"  # Change to your timezone
+        SCHEDULE_TYPE: "WEEKLY" # Or "DAILY"
+        RUN_TIME: "09:00"       # Time to run the job (HH:MM)
       volumes:
         - ./logs:/app/logs:rw
   ```
 4. Open a terminal in that folder and run: `docker compose up -d`
-5. Check if it's working: `docker logs calendarr`
+5. Check if it's working: `docker logs calendarr -f`
 
-That's it! The container will immediately run once (if RUN_ON_STARTUP is true) and then according to the schedule you've set.
+That's it! The container will immediately run once (if `RUN_ON_STARTUP` is `true`) and then according to the schedule you've set.
 
 ## 🚧 Development
 
