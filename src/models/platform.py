@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 from datetime import datetime
 import logging
+import traceback # Ensure traceback is imported
 
 from models.day import Day
 from models.event_item import EventItem
@@ -198,55 +199,67 @@ class  DiscordPlatform(Platform):
             "color": color
         }
     
-    def format_header(self, custom_header: str, start_date: datetime, 
+    def format_header(self, custom_header: str, start_date: datetime,
                      end_date: datetime, show_date_range: bool,
                      tv_count: int, movie_count: int, premiere_count: int) -> Dict[str, Any]:
-        """
-        Format Discord header message
-        
-        Args:
-            custom_header: Header text
-            start_date: Start date
-            end_date: End date
-            show_date_range: Whether to show date range
-            tv_count: Number of TV episodes
-            movie_count: Number of movie releases
-            premiere_count: Number of premieres
-            
-        Returns:
-            Discord message object
-        """
-        # Create header with formatted date
-        header_text = format_header_text(custom_header, start_date, end_date, show_date_range)
-        subheader = format_subheader_text(tv_count, movie_count, premiere_count, PLATFORM_DISCORD)
 
-        # --- Get Timezone Line if needed ---
-        timezone_line = ""
-        if self.config.show_timezone_in_subheader:
-            # Call the utility function
-            timezone_line = format_timezone_line(self.config.timezone_obj, PLATFORM_DISCORD)
-        # --- End Timezone Line ---
+        logger.debug("Entering DiscordPlatform.format_header")
+        final_content = ""
 
-        # --- Create Mention Text ---
-        mention_text = ""
-        role_id = self.config.discord_mention_role_id
-        hide_instructions = self.config.discord_hide_mention_instructions
+        try:
+            # Create header text
+            header_text = format_header_text(custom_header, start_date, end_date, show_date_range)
+            logger.debug(f"format_header - header_text: '{header_text}'")
 
-        logger.debug(f"Discord mention check: Role ID='{role_id}', Hide Instructions='{hide_instructions}' (Type: {type(hide_instructions)})")
+            # Get subheader text, already bolded for Discord
+            subheader = format_subheader_text(tv_count, movie_count, premiere_count, PLATFORM_DISCORD)
+            logger.debug(f"format_header - subheader: '{subheader.strip()}'") 
 
-        if role_id: # Check if role_id is not None and not empty
-            # REMOVE leading \n from the mention itself
-            mention_text = f"<@&{role_id}>"
-            if not hide_instructions:
-                # Keep the \n between the mention and the instructions
-                mention_text += f"\n{ITALIC_START}If you'd like to be notified when new content is available, join this role!{ITALIC_END}"
+            # --- Get Timezone Line if needed ---
+            timezone_line = ""
+            if self.config.show_timezone_in_subheader:
+                timezone_line = format_timezone_line(self.config.timezone_obj, PLATFORM_DISCORD)
+            logger.debug(f"format_header - timezone_line: '{timezone_line}'")
 
-        # Combine parts: Header, Subheader, Timezone Line (if any), Mention Text (if any)
-        if timezone_line:
-            final_content += f"\n\n{timezone_line}"
-        if mention_text:
-            final_content += f"\n\n{mention_text}" 
+            # --- Create Mention Text ---
+            mention_text = ""
+            role_id = self.config.discord_mention_role_id
+            hide_instructions = self.config.discord_hide_mention_instructions
+            if role_id:
+                mention_text = f"<@&{role_id}>"
+                if not hide_instructions:
+                    mention_text += f"\n{ITALIC_START}If you'd like to be notified...{ITALIC_END}"
+            logger.debug(f"format_header - mention_text: '{mention_text}'")
 
+            # --- Combine parts ---
+            logger.debug("format_header - Attempting to assemble final_content")
+            safe_header = str(header_text) if header_text is not None else ""
+            safe_subheader = str(subheader).rstrip() if subheader is not None else "" # Use rstrip here
+
+            final_content = f"{safe_header}\n\n{safe_subheader}" # Initial assignment
+            logger.debug("format_header - Assembled base final_content")
+
+            if timezone_line:
+                final_content += f"\n\n{str(timezone_line)}"
+                logger.debug("format_header - Added timezone_line to final_content")
+            if mention_text:
+                final_content += f"\n\n{str(mention_text)}"
+                logger.debug("format_header - Added mention_text to final_content")
+
+            logger.debug("format_header - Successfully assembled final_content")
+
+        except Exception as e:
+             logger.error(f"☠️ Error during Discord content assembly in format_header: {e}")
+             logger.debug(traceback.format_exc())
+             # Fallback: Try returning at least the header text if assembly fails
+             try:
+                 final_content = str(header_text) if header_text is not None else "Error generating message content."
+                 logger.debug("format_header - Assigned fallback content after error")
+             except Exception as fallback_e:
+                 logger.error(f"☠️ Error assigning fallback content in format_header: {fallback_e}")
+                 final_content = "Error generating message content." # Absolute fallback
+
+        logger.debug(f"format_header - Returning final_content:\n'''\n{final_content}\n'''")
         return {
             "content": final_content
         }
@@ -295,7 +308,7 @@ class  DiscordPlatform(Platform):
         """Format a movie event for Discord"""
         time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
         movie_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
-        # Use Discord bold constants
+
         formatted = f"{time_prefix}{DISCORD_BOLD_START}{movie_name_to_format}{DISCORD_BOLD_END}"
 
         if event_item.is_past and passed_event_handling == "STRIKE":
