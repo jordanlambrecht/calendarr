@@ -18,7 +18,8 @@ from constants import (
     DEFAULT_SCHEDULE_DAY, DEFAULT_LOG_DIR, DEFAULT_LOG_FILE, DEFAULT_LOG_BACKUP_COUNT, DEFAULT_DISCORD_MENTION_ROLE_ID,
     DEFAULT_LOG_MAX_SIZE_MB, DEFAULT_USE_SLACK, DEFAULT_USE_DISCORD,
     EVENT_TYPE_TV, EVENT_TYPE_MOVIE, VALID_EVENT_TYPES,
-    DEFAULT_DISCORD_HIDE_MENTION_INSTRUCTIONS
+    DEFAULT_DISCORD_HIDE_MENTION_INSTRUCTIONS,
+    DEFAULT_SHOW_TIMEZONE_IN_SUBHEADER
 )
 
 logger = logging.getLogger("config")
@@ -207,6 +208,7 @@ class Config:
     # Display settings
     custom_header: str = DEFAULT_HEADER
     show_date_range: bool = DEFAULT_SHOW_DATE_RANGE
+    show_timezone_in_subheader: bool = DEFAULT_SHOW_TIMEZONE_IN_SUBHEADER
     start_week_on_monday: bool = DEFAULT_START_WEEK_ON_MONDAY
     deduplicate_events: bool = DEFAULT_DEDUPLICATE_EVENTS
     
@@ -625,15 +627,18 @@ def load_config_from_env() -> Config:
             logger.debug("🔍  Loading display settings")
             custom_header = os.environ.get("CUSTOM_HEADER", DEFAULT_HEADER)
             show_date_range = get_env_bool("SHOW_DATE_RANGE", DEFAULT_SHOW_DATE_RANGE)
+            show_timezone_in_subheader = get_env_bool("SHOW_TIMEZONE_IN_SUBHEADER", DEFAULT_SHOW_TIMEZONE_IN_SUBHEADER)
             start_week_on_monday = get_env_bool("START_WEEK_ON_MONDAY", DEFAULT_START_WEEK_ON_MONDAY)
             deduplicate_events = get_env_bool("DEDUPLICATE_EVENTS", DEFAULT_DEDUPLICATE_EVENTS)
             logger.debug(f"✅  Loaded display settings: header='{custom_header}', "
-                        f"show_date_range={show_date_range}, start_on_monday={start_week_on_monday}")
+                     f"show_date_range={show_date_range}, start_on_monday={start_week_on_monday}, "
+                     f"show_timezone={show_timezone_in_subheader}")
         except Exception as e:
             logger.error(f"Error loading display settings: {e}")
             logger.debug(f"❌  Exception details: {traceback.format_exc()}")
             custom_header = DEFAULT_HEADER
             show_date_range = DEFAULT_SHOW_DATE_RANGE
+            show_timezone_in_subheader = DEFAULT_SHOW_TIMEZONE_IN_SUBHEADER
             start_week_on_monday = DEFAULT_START_WEEK_ON_MONDAY
             deduplicate_events = DEFAULT_DEDUPLICATE_EVENTS
         
@@ -674,6 +679,7 @@ def load_config_from_env() -> Config:
                 discord_hide_mention_instructions=discord_hide_mention_instructions,
                 custom_header=custom_header,
                 show_date_range=show_date_range,
+                show_timezone_in_subheader=show_timezone_in_subheader,
                 start_week_on_monday=start_week_on_monday,
                 calendar_urls=calendar_urls,
                 passed_event_handling=passed_event_handling,

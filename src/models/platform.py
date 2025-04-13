@@ -11,13 +11,17 @@ from models.day import Day
 from models.event_item import EventItem
 from config.settings import Config
 from utils.format_utils import (
-    format_header_text, format_subheader_text, get_day_colors, join_content_parts,
-    build_content_summary_parts
+    format_header_text, format_subheader_text, get_day_colors,
+    format_timezone_line # Import the new function
 )
 from constants import (
     PLATFORM_DISCORD,
     PLATFORM_SLACK,
-    EPISODE_PATTERN
+    EPISODE_PATTERN,
+    # Import styling constants needed here
+    DISCORD_BOLD_START, DISCORD_BOLD_END, DISCORD_ITALIC_START, DISCORD_ITALIC_END, DISCORD_STRIKE_START, DISCORD_STRIKE_END,
+    SLACK_BOLD_START, SLACK_BOLD_END, SLACK_ITALIC_START, SLACK_ITALIC_END, SLACK_STRIKE_START, SLACK_STRIKE_END,
+    ITALIC_START, ITALIC_END # Universal italic
 )
 from services.webhook_service import WebhookService
 
@@ -214,23 +218,37 @@ class  DiscordPlatform(Platform):
         """
         # Create header with formatted date
         header_text = format_header_text(custom_header, start_date, end_date, show_date_range)
-        subheader = format_subheader_text(tv_count, movie_count, premiere_count)
+        subheader = format_subheader_text(tv_count, movie_count, premiere_count, PLATFORM_DISCORD)
 
+        # --- Get Timezone Line if needed ---
+        timezone_line = ""
+        if self.config.show_timezone_in_subheader:
+            # Call the utility function
+            timezone_line = format_timezone_line(self.config.timezone_obj, PLATFORM_DISCORD)
+        # --- End Timezone Line ---
+
+        # --- Create Mention Text ---
         mention_text = ""
         role_id = self.config.discord_mention_role_id
         hide_instructions = self.config.discord_hide_mention_instructions
 
-
         logger.debug(f"Discord mention check: Role ID='{role_id}', Hide Instructions='{hide_instructions}' (Type: {type(hide_instructions)})")
 
         if role_id: # Check if role_id is not None and not empty
-            mention_text = f"\n<@&{role_id}>"
-            # Simple boolean check now works
+            # REMOVE leading \n from the mention itself
+            mention_text = f"<@&{role_id}>"
             if not hide_instructions:
-                mention_text += "\n_If you'd like to be notified when new content is available, join this role!_"
+                # Keep the \n between the mention and the instructions
+                mention_text += f"\n{ITALIC_START}If you'd like to be notified when new content is available, join this role!{ITALIC_END}"
+
+        # Combine parts: Header, Subheader, Timezone Line (if any), Mention Text (if any)
+        if timezone_line:
+            final_content += f"\n\n{timezone_line}"
+        if mention_text:
+            final_content += f"\n\n{mention_text}" 
 
         return {
-            "content": f"{header_text}\n\n{subheader}{mention_text}"
+            "content": final_content
         }
     
     def format_tv_event(self, event_item: EventItem, passed_event_handling: str) -> str:
@@ -243,7 +261,8 @@ class  DiscordPlatform(Platform):
         """
         time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
         show_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
-        formatted_show = f"**{show_name_to_format}**" # Discord uses **bold**
+
+        formatted_show = f"{DISCORD_BOLD_START}{show_name_to_format}{DISCORD_BOLD_END}"
 
         episode_details = ""
         number = event_item.episode_number
@@ -252,11 +271,9 @@ class  DiscordPlatform(Platform):
         if title:
             is_standard_ep_num = bool(number and EPISODE_PATTERN.match(number))
             if is_standard_ep_num:
-                # Standard format: Show - SxxExx - *Title*
-                episode_details = f" - {number} - *{title}*"
+                episode_details = f" - {number} - {DISCORD_ITALIC_START}{title}{DISCORD_ITALIC_END}"
             else:
-                # Non-standard number: Show - *Number - Title*
-                episode_details = f" - *{number} - {title}*"
+                episode_details = f" - {DISCORD_ITALIC_START}{number} - {title}{DISCORD_ITALIC_END}"
         elif number:
             is_standard_ep_num = bool(EPISODE_PATTERN.match(number))
             if is_standard_ep_num:
@@ -264,22 +281,27 @@ class  DiscordPlatform(Platform):
                 episode_details = f" - {number}"
             else:
                 # Non-standard number only: Show - *Number*
-                episode_details = f" - *{number}*"
+                episode_details = f" - {DISCORD_ITALIC_START}{number}{DISCORD_ITALIC_END}"
 
         formatted = f"{time_prefix}{formatted_show}{episode_details}"
         if event_item.is_premiere:
             formatted += " 🎉"
         if event_item.is_past and passed_event_handling == "STRIKE":
-            formatted = f"~~{formatted}~~" # Discord uses ~~strike~~
+            formatted = f"{DISCORD_STRIKE_START}{formatted}{DISCORD_STRIKE_END}"
 
         return formatted.strip()
     
     def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """Format a movie event for Discord"""
-        formatted = f"🎬  **{event_item.summary}**" # Discord uses **bold**
+        time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
+        movie_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
+        # Use Discord bold constants
+        formatted = f"{time_prefix}{DISCORD_BOLD_START}{movie_name_to_format}{DISCORD_BOLD_END}"
+
         if event_item.is_past and passed_event_handling == "STRIKE":
-            formatted = f"~~{formatted}~~" # Discord uses ~~strike~~
-        return formatted
+            formatted = f"{DISCORD_STRIKE_START}{formatted}{DISCORD_STRIKE_END}"
+
+        return formatted.strip()
 
 
 class SlackPlatform(Platform):
@@ -359,34 +381,25 @@ class SlackPlatform(Platform):
         Returns:
             Slack message object with blocks
         """
-        # Create header text
-        header_text = custom_header
-        
-        # Handle date display in header
-        if show_date_range:
-            # Check if we're in daily mode (start and end date are the same day)
-            if start_date.date() == end_date.date():
-                # For daily mode, show just the day name and date
-                header_text += f" ({start_date.strftime('%A, %b %d')})"
-            else:
-                # For weekly mode, show the range as before
-                header_text += f" ({start_date.strftime('%b %d')} - {end_date.strftime('%b %d')})"
-        
-        # Get content summary
-        content_parts = build_content_summary_parts(
-            tv_count, movie_count, premiere_count, PLATFORM_SLACK
-        )
-        message_text = join_content_parts(content_parts, PLATFORM_SLACK)
-        
+        # Create header text and date range text
+        header_text = format_header_text(custom_header, start_date, end_date, show_date_range)
+        date_range_text = "" # Slack doesn't use the date range in the main text block
+
+        # Create subheader text (without timezone)
+        subheader_text = format_subheader_text(tv_count, movie_count, premiere_count, PLATFORM_SLACK).strip() # Remove trailing newlines
+
+        #Get timezone line if needed
+        timezone_line = ""
+        if self.config.show_timezone_in_subheader:
+            # Call the utility function
+            timezone_line = format_timezone_line(self.config.timezone_obj, PLATFORM_SLACK)
+
+        # Combine parts for the main text block
+        message_text = f"{header_text}\n\n{subheader_text}{timezone_line}"
+
+        # Return Slack block payload
         return {
             "blocks": [
-                {
-                    "type": "header",
-                    "text": {
-                        "type": "plain_text",
-                        "text": header_text
-                    }
-                },
                 {
                     "type": "section",
                     "text": {
@@ -403,7 +416,7 @@ class SlackPlatform(Platform):
         """
         time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
         show_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
-        formatted_show = f"*{show_name_to_format}*" # Slack uses *bold*
+        formatted_show = f"{SLACK_BOLD_START}{show_name_to_format}{SLACK_BOLD_END}"
 
         episode_details = ""
         number = event_item.episode_number
@@ -412,31 +425,31 @@ class SlackPlatform(Platform):
         if title:
             is_standard_ep_num = bool(number and EPISODE_PATTERN.match(number))
             if is_standard_ep_num:
-                # Standard format: Show - SxxExx - _Title_
-                episode_details = f" - {number} - _{title}_"
+                episode_details = f" - {number} - {SLACK_ITALIC_START}{title}{SLACK_ITALIC_END}"
             else:
-                # Non-standard number: Show - _Number - Title_
-                episode_details = f" - _{number} - {title}_"
+                episode_details = f" - {SLACK_ITALIC_START}{number} - {title}{SLACK_ITALIC_END}"
         elif number:
             is_standard_ep_num = bool(EPISODE_PATTERN.match(number))
             if is_standard_ep_num:
-                # Standard number only: Show - SxxExx
                 episode_details = f" - {number}"
             else:
-                # Non-standard number only: Show - _Number_
-                episode_details = f" - _{number}_"
+                episode_details = f" - {SLACK_ITALIC_START}{number}{SLACK_ITALIC_END}"
 
         formatted = f"{time_prefix}{formatted_show}{episode_details}"
         if event_item.is_premiere:
             formatted += " 🎉"
         if event_item.is_past and passed_event_handling == "STRIKE":
-            formatted = f"~{formatted}~" # Slack uses ~strike~
+            formatted = f"{SLACK_STRIKE_START}{formatted}{SLACK_STRIKE_END}"
 
         return formatted.strip()
     
     def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """Format a movie event for Slack"""
-        formatted = f"🎬  *{event_item.summary}*" # Slack uses *bold*
+        time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
+        movie_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
+        formatted = f"{time_prefix}{SLACK_BOLD_START}{movie_name_to_format}{SLACK_BOLD_END}"
+
         if event_item.is_past and passed_event_handling == "STRIKE":
-            formatted = f"~{formatted}~" # Slack uses ~strike~
-        return formatted
+            formatted = f"{SLACK_STRIKE_START}{formatted}{SLACK_STRIKE_END}"
+
+        return formatted.strip()
