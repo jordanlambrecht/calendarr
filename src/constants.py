@@ -35,6 +35,25 @@ VALID_EVENT_TYPES = [EVENT_TYPE_TV, EVENT_TYPE_MOVIE]
 # ==============================================
 NO_NEW_RELEASES_MSG = "No new releases. Maybe it's a good day to take a walk?"
 
+# --- Markdown Styling Constants ---
+# Discord
+DISCORD_BOLD_START = "**"
+DISCORD_BOLD_END = "**"
+DISCORD_ITALIC_START = "*"
+DISCORD_ITALIC_END = "*"
+DISCORD_STRIKE_START = "~~"
+DISCORD_STRIKE_END = "~~"
+# Slack
+SLACK_BOLD_START = "*"
+SLACK_BOLD_END = "*"
+SLACK_ITALIC_START = "_"
+SLACK_ITALIC_END = "_"
+SLACK_STRIKE_START = "~"
+SLACK_STRIKE_END = "~"
+# Universal (for cases where syntax is the same, like italics with _)
+ITALIC_START = "_"
+ITALIC_END = "_"
+
 COLOR_PALETTE = {
     "discord": {
         "red": 15158332,      
@@ -87,6 +106,7 @@ DEFAULT_USE_24_HOUR = True
 DEFAULT_ADD_LEADING_ZERO = True
 DEFAULT_DISPLAY_TIME = True
 DEFAULT_SHOW_DATE_RANGE = True
+DEFAULT_SHOW_TIMEZONE_IN_SUBHEADER = False
 
 # --- Logging ---
 DEFAULT_LOG_DIR = "/app/logs"
@@ -106,3 +126,26 @@ VALID_CALENDAR_RANGE = ["DAY", "WEEK", "AUTO"]
 JOB_ID_DEBUG_PING = 'debug_ping_job'
 JOB_ID_LOG_CLEANUP = 'log_cleanup_job'
 JOB_ID_MAIN = 'main_job'
+
+
+# ==============================================
+# Timezone Formatting
+# ==============================================
+# Map common pytz identifiers to user-friendly names
+# TODO: Add more mappings
+TIMEZONE_NAME_MAP = {
+    "America/Los_Angeles": "Pacific Time",
+    "America/Vancouver": "Pacific Time",
+    "America/Denver": "Mountain Time",
+    "America/Edmonton": "Mountain Time",
+    "America/Chicago": "Central Time",
+    "America/Toronto": "Eastern Time",
+    "America/New_York": "Eastern Time",
+    "Europe/London": "UK Time",
+    "Europe/Berlin": "Central European Time",
+    "Australia/Sydney": "Australian Eastern Time",
+    "Asia/Tokyo": "Japan Standard Time",
+    "Asia/Kolkata": "Indian Standard Time",
+    "Asia/Hong_Kong": "Hong Kong Time",
+    "UTC": "UTC"
+}
