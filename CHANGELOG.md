@@ -5,6 +5,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] 2025-04-15
+
+### Fixed
+- Movie release lists were showing times and missing their 🎬 emoji. Movies should never display release times
+- Slack was not correctly formatting markdown in the header/subheader
+
+### Changed
+- Some hard-coded messages were instead moved to the constants file
+
 ## [1.4.0] 2025-04-12
 
 ### Added
