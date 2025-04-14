@@ -192,6 +192,13 @@ If you're new to Docker, it's fairly easy to get this going. I won't post an in-
 
 That's it! The container will immediately run once (if `RUN_ON_STARTUP` is `true`) and then according to the schedule you've set.
 
+
+## 🧑‍💻 Contributing
+
+The two biggest things I need help with right now are:
+- Adding friendly timezone names to the `TIMEZONE_NAME_MAP` in the `constants.py` file
+- Translations. There is no localization structure implemented yet, but it would be great to get a head start in things like spanish, etc
+
 ## 🚧 Development
 
 If you want to build the container yourself:
