@@ -1,3 +1,7 @@
+![Docker Pulls](https://img.shields.io/docker/pulls/jordyjordyjordy/calendarr)
+![GitHub Release](https://img.shields.io/github/v/release/jordanlambrecht/calendarr)
+![GitHub last commit](https://img.shields.io/github/last-commit/jordanlambrecht/calendarr)
+
 # 📆 Calendarr
 
 A simple Docker container that fetches upcoming airings/releases for TV shows and movies from Sonarr and Radarr calendars and posts them to Discord on a schedule.
@@ -8,7 +12,6 @@ A simple Docker container that fetches upcoming airings/releases for TV shows an
 
 - Combines multiple Sonarr and Radarr calendar feeds
 - Groups shows and movies by day of the week
-- Highlights season premieres with a party emoji 🎉
 - Runs on a customizable schedule (daily or weekly)
 - Supports both Discord and Slack notifications
 - Highly customizable configuration 
@@ -117,7 +120,7 @@ You can add custom text to the end of your Discord and Slack announcements using
     # docker-compose.yml example snippet
     services:
       calendarr:
-        # ... other settings ...
+        # ... other stuff ...
         volumes:
           - ./logs:/app/logs:rw
           - ./custom_footers:/app/custom_footers:rw # Add this line
@@ -125,7 +128,6 @@ You can add custom text to the end of your Discord and Slack announcements using
 3.  **Edit Footer Files:**
     *   When you first start the container with the volume mount, Calendarr will automatically copy default template files (`discord_footer.md` and `slack_footer.md`) into your local `./custom_footers` directory (if they don't already exist).
     *   Edit these files using standard Markdown (for Discord) or Slack's `mrkdwn` (for Slack) to customize your footer.
-    *   HTML comments (`<!-- ... -->`) will be ignored.
 
 If the footer files are missing or cannot be read, the app will log a warning and omit the footer without failing.
 
@@ -227,6 +229,14 @@ That's it! The container will immediately run once (if `RUN_ON_STARTUP` is `true
 The two biggest things I need help with right now are:
 - Adding friendly timezone names to the `TIMEZONE_NAME_MAP` in the `constants.py` file
 - Translations. There is no localization structure implemented yet, but it would be great to get a head start in things like spanish, etc
+
+## 🛒 ToDo
+Features I'd like to maybe implement:
+
+- Localization
+- More platform integrations
+- Potentially a web ui
+
 
 ## 🚧 Development
 
