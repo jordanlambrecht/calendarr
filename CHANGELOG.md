@@ -5,6 +5,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] 2025-04-15
+
+### Added
+- **Custom Footers:** Added support for customizable footers for both Discord and Slack announcements.
+    - Controlled via `ENABLE_CUSTOM_DISCORD_FOOTER` and `ENABLE_CUSTOM_SLACK_FOOTER` environment variables.
+    - Reads content from Markdown files (`discord_footer.md`, `slack_footer.md`).
+    - Default footer template files are now included in the Docker image.
+    - Added an entrypoint script (`entrypoint.sh`) to automatically copy default footer templates to a user's mounted volume (`/app/custom_footers`) on first run if the files don't already exist there, simplifying customization.
+
+### Changed
+- Discord custom footer is now sent as a separate message *after* all daily embeds.
+- Slack custom footer is now sent as a separate message using a `context` block (resulting in smaller text per Slack standards).
+
+### Fixed
+- Resolved configuration loading errors ("can't set attribute") during application startup.
+- Fixed `TypeError` when formatting days for Discord due to an incorrect argument.
+- Corrected Slack message assembly to ensure header blocks are consistently sent along with daily attachments.
+
 ## [1.4.2] 2025-04-15
 
 ### Fixed
