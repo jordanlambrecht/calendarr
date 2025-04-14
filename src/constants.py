@@ -33,9 +33,9 @@ VALID_EVENT_TYPES = [EVENT_TYPE_TV, EVENT_TYPE_MOVIE]
 # ==============================================
 # User Interface & Formatting
 # ==============================================
-NO_NEW_RELEASES_MSG = "No new releases this week. Maybe this is a good time to take a walk? Or call your mom and tell her you love her"
+NO_NEW_RELEASES_MSG = "No new releases this week. Maybe this is a good time to take a walk?"
 MENTION_ROLE_ID_MSG = "If you'd like to be notified when new content is available, join this role!"
-NO_CONTENT_TODAY_MSG = "No releases scheduled for this day."
+NO_CONTENT_TODAY_MSG = "No releases scheduled for this day. Maybe you could call your mom and tell her you love her instead?"
 
 # --- Markdown Styling Constants ---
 # Discord
@@ -78,6 +78,12 @@ COLOR_PALETTE = {
 }
 
 # ==============================================
+# Custom Content Files
+# ==============================================
+DISCORD_FOOTER_FILE = "/app/custom_footers/discord_footer.md"
+SLACK_FOOTER_FILE = "/app/custom_footers/slack_footer.md"
+
+# ==============================================
 # Default Config Values
 # ==============================================
 
@@ -115,6 +121,10 @@ DEFAULT_LOG_DIR = "/app/logs"
 DEFAULT_LOG_FILE = "calendarr.log"
 DEFAULT_LOG_BACKUP_COUNT = 15
 DEFAULT_LOG_MAX_SIZE_MB = 1
+
+# --- Custom Footers ---
+DEFAULT_ENABLE_CUSTOM_DISCORD_FOOTER = False
+DEFAULT_ENABLE_CUSTOM_SLACK_FOOTER = False
 
 # ==============================================
 # Valid Config Options

@@ -19,7 +19,9 @@ from constants import (
     DEFAULT_LOG_MAX_SIZE_MB, DEFAULT_USE_SLACK, DEFAULT_USE_DISCORD,
     EVENT_TYPE_TV, EVENT_TYPE_MOVIE, VALID_EVENT_TYPES,
     DEFAULT_DISCORD_HIDE_MENTION_INSTRUCTIONS,
-    DEFAULT_SHOW_TIMEZONE_IN_SUBHEADER
+    DEFAULT_SHOW_TIMEZONE_IN_SUBHEADER,
+    DEFAULT_ENABLE_CUSTOM_DISCORD_FOOTER,
+    DEFAULT_ENABLE_CUSTOM_SLACK_FOOTER
 )
 
 logger = logging.getLogger("config")
@@ -235,6 +237,10 @@ class Config:
     
     # HTTP settings
     http_timeout: int = DEFAULT_HTTP_TIMEOUT
+
+    # --- Add Footer Flags ---
+    enable_custom_discord_footer: bool = DEFAULT_ENABLE_CUSTOM_DISCORD_FOOTER
+    enable_custom_slack_footer: bool = DEFAULT_ENABLE_CUSTOM_SLACK_FOOTER
     
     def __post_init__(self):
         try:
@@ -249,7 +255,7 @@ class Config:
                     self.calendar_range = self.calendar_range.upper()
                     logger.debug(f"🔄  Normalized calendar_range to {self.calendar_range}")
             except (AttributeError, TypeError) as e:
-                logger.warning(f"Error normalizing string settings: {e}")
+                logger.warning(f"❌  Error normalizing string settings: {e}")
                 
             # Log configured calendar URLs
             logger.debug(f"📋  Initialized with {len(self.calendar_urls)} calendar URLs")
@@ -258,7 +264,7 @@ class Config:
                 
             logger.debug(f"✅  Config initialization complete")
         except Exception as e:
-            logger.error(f"Error in Config.__post_init__: {e}")
+            logger.error(f"❌  Error in Config.__post_init__: {e}")
             logger.debug(f"❌  Exception details: {traceback.format_exc()}")
     
     @property
@@ -275,10 +281,10 @@ class Config:
             logger.debug(f"✅  Successfully created timezone object: {tz}")
             return tz
         except pytz.exceptions.UnknownTimeZoneError:
-            logger.error(f"Unknown timezone: {self.timezone}, falling back to UTC")
+            logger.error(f"🤔  Unknown timezone: {self.timezone}, falling back to UTC")
             return pytz.UTC
         except Exception as e:
-            logger.error(f"Error creating timezone object: {e}")
+            logger.error(f"❌  Error creating timezone object: {e}")
             logger.debug(f"❌  Exception details: {traceback.format_exc()}")
             return pytz.UTC
     
@@ -666,6 +672,19 @@ def load_config_from_env() -> Config:
             logger.debug(f"❌  Exception details: {traceback.format_exc()}")
             timezone = "UTC"
             http_timeout = DEFAULT_HTTP_TIMEOUT
+
+        # Load Footer Settings
+        try:
+            logger.debug("🔍  Loading custom footer settings")
+            enable_custom_discord_footer = get_env_bool("ENABLE_CUSTOM_DISCORD_FOOTER", DEFAULT_ENABLE_CUSTOM_DISCORD_FOOTER)
+            enable_custom_slack_footer = get_env_bool("ENABLE_CUSTOM_SLACK_FOOTER", DEFAULT_ENABLE_CUSTOM_SLACK_FOOTER)
+            logger.debug(f"📋  Enable custom Discord footer: {enable_custom_discord_footer}")
+            logger.debug(f"📋  Enable custom Slack footer: {enable_custom_slack_footer}")
+        except Exception as e:
+            logger.error(f"Error loading footer settings: {e}")
+            logger.debug(f"❌  Exception details: {traceback.format_exc()}")
+            enable_custom_discord_footer = DEFAULT_ENABLE_CUSTOM_DISCORD_FOOTER
+            enable_custom_slack_footer = DEFAULT_ENABLE_CUSTOM_SLACK_FOOTER
         
         # Create config object
         try:
@@ -689,7 +708,9 @@ def load_config_from_env() -> Config:
                 schedule_settings=schedule_settings,
                 logging_settings=logging_settings,
                 timezone=timezone,
-                http_timeout=http_timeout
+                http_timeout=http_timeout,
+                enable_custom_discord_footer=enable_custom_discord_footer,
+                enable_custom_slack_footer=enable_custom_slack_footer,
             )
             logger.debug("✅  Successfully created Config object")
         except Exception as e:

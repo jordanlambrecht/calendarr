@@ -3,7 +3,7 @@
 
 import re
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
 import traceback
@@ -20,7 +20,7 @@ from constants import (
     PLATFORM_DISCORD,
     PLATFORM_SLACK,
     EPISODE_PATTERN,
-    # Import styling constants needed here
+    # Import styling constants
     DISCORD_BOLD_START, DISCORD_BOLD_END, DISCORD_ITALIC_START, DISCORD_ITALIC_END, DISCORD_STRIKE_START, DISCORD_STRIKE_END,
     SLACK_BOLD_START, SLACK_BOLD_END, SLACK_ITALIC_START, SLACK_ITALIC_END, SLACK_STRIKE_START, SLACK_STRIKE_END,
     ITALIC_START, ITALIC_END # Universal italic
@@ -160,50 +160,57 @@ class  DiscordPlatform(Platform):
         """
         return get_day_colors(PLATFORM_DISCORD, self.config.start_week_on_monday)
     
-    def format_day(self, day: Day) -> Dict[str, Any]:
+    def format_day(self, day: Day) -> Optional[Dict[str, Any]]:
         """
-        Format a day as Discord embed
-        
+        Format a day as Discord embed.
+
         Args:
             day: Day to format
-            
+
         Returns:
-            Discord embed object
+            Discord embed object dictionary, or None if formatting fails.
         """
-        # Get color for this day
-        color = self.day_colors.get(day.day_name, 0)
-        
-        # Format TV and movie events
-        tv_formatted = [
-            self.format_tv_event(event, self.config.passed_event_handling) 
-            for event in day.tv_events
-        ]
-        
-        movie_formatted = [
-            self.format_movie_event(event, self.config.passed_event_handling) 
-            for event in day.movie_events
-        ]
-        
-        # Combine tv and movie listings
-        description = ""
-        if tv_formatted:
-            description += "\n".join(tv_formatted)
-            # Add blank line only if both TV and Movies exist
+        try:
+            # Get color for this day
+            color = self.day_colors.get(day.day_name, 0)
+
+            # Format TV and movie events
+            tv_formatted = [
+                self.format_tv_event(event, self.config.passed_event_handling)
+                for event in day.tv_events
+            ]
+            movie_formatted = [
+                self.format_movie_event(event, self.config.passed_event_handling)
+                for event in day.movie_events
+            ]
+
+            # Combine tv and movie listings
+            description = ""
+            if tv_formatted:
+                description += "\n".join(tv_formatted)
+                if movie_formatted:
+                    description += "\n\n" # Blank line between TV and Movies
+
             if movie_formatted:
-                description += "\n\n"
+                description += f"{DISCORD_BOLD_START}MOVIES{DISCORD_BOLD_END}\n" + "\n".join(movie_formatted)
 
-        if movie_formatted:
-            # Use Discord bold constants for the header
-            description += f"{DISCORD_BOLD_START}MOVIES{DISCORD_BOLD_END}\n" + "\n".join(movie_formatted)
+            # Ensure description is not empty before returning
+            if not description:
+                description = f"{DISCORD_ITALIC_START}{NO_CONTENT_TODAY_MSG}{DISCORD_ITALIC_END}"
 
-        # Ensure description is not empty before returning
-        if not description:
-            description = f"{DISCORD_ITALIC_START}{NO_CONTENT_TODAY_MSG}{DISCORD_ITALIC_END}"
-        return {
-            "title": day.name,
-            "description": description,
-            "color": color
-        }
+            # --- Assemble Embed ---
+            embed_dict = {
+                "title": day.name,
+                "description": description,
+                "color": color
+            }
+
+            return embed_dict
+
+        except Exception as e:
+            logger.error(f"☠️ Error formatting day {day.name} in DiscordPlatform.format_day: {e}")
+            logger.debug(traceback.format_exc())
+            return None # Return None if formatting fails
     
     def format_header(self, custom_header: str, start_date: datetime,
                      end_date: datetime, show_date_range: bool,
@@ -314,7 +321,7 @@ class  DiscordPlatform(Platform):
         """Format a movie event for Discord"""
         movie_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
 
-        formatted = f"🎬 {DISCORD_BOLD_START}{movie_name_to_format}{DISCORD_BOLD_END}"
+        formatted = f"🎬  {DISCORD_BOLD_START}{movie_name_to_format}{DISCORD_BOLD_END}"
 
         if event_item.is_past and passed_event_handling == "STRIKE":
             formatted = f"{DISCORD_STRIKE_START}{formatted}{DISCORD_STRIKE_END}"
@@ -491,7 +498,7 @@ class SlackPlatform(Platform):
     def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """Format a movie event for Slack"""
         movie_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
-        formatted = f"🎬 {SLACK_BOLD_START}{movie_name_to_format}{SLACK_BOLD_END}"
+        formatted = f"🎬  {SLACK_BOLD_START}{movie_name_to_format}{SLACK_BOLD_END}"
 
         if event_item.is_past and passed_event_handling == "STRIKE":
             formatted = f"{SLACK_STRIKE_START}{formatted}{SLACK_STRIKE_END}"

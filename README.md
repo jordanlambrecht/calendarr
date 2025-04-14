@@ -55,37 +55,43 @@ docker run -d \
 
 ## 🛠️ Configuration
 
-| Variable                              | Type    | Description                                                                                             |
-| :------------------------------------ | :------ | :------------------------------------------------------------------------------------------------------ |
-| `TZ`                                  | String  | Timezone (e.g., `America/New_York`)                                                                     |
-| `CALENDAR_URLS`                       | String  | JSON array of calendar URLs and types (e.g., `[{"url":"http://...","type":"tv"}]`)                       |
-| `USE_DISCORD`                         | Boolean | Enable Discord notifications (Optional. Default: `true`)                                                |
-| `DISCORD_WEBHOOK_URL`                 | String  | Discord webhook URL                                                                                     |
-| `USE_SLACK`                           | Boolean | Enable Slack notifications (Optional. Default: `false`)                                                 |
-| `SLACK_WEBHOOK_URL`                   | String  | Slack webhook URL                                                                                       |
-| `SCHEDULE_TYPE`                       | String  | `DAILY` or `WEEKLY` (Optional. Default: `WEEKLY`)                                                       |
-| `SCHEDULE_DAY`                        | String  | Day of week for weekly schedule (`0`-`6`, Sunday-Saturday) (Optional. Default: `1` - Monday)            |
-| `RUN_TIME`                            | String  | Time to run job (HH:MM) (Optional. Default: `09:00`)                                                    |
-| `CRON_SCHEDULE`                       | String  | Custom CRON expression (Overrides `SCHEDULE_TYPE`, `SCHEDULE_DAY`, `RUN_TIME`) (Optional)               |
-| `RUN_ON_STARTUP`                      | Boolean | Run the job immediately when the container starts (Optional. Default: `false`)                          |
-| `CUSTOM_HEADER`                       | String  | Custom header text (Optional. Default: `New Releases`)                                                  |
-| `SHOW_DATE_RANGE`                     | Boolean | Show the date range in the header (Optional. Default: `true`)                                           |
-| `SHOW_TIMEZONE_IN_SUBHEADER`          | Boolean | Show the configured timezone(Optional. Default: `false`) |
-| `USE_24_HOUR`                         | Boolean | Use 24-hour time format (Optional. Default: `true`)                                                     |
-| `ADD_LEADING_ZERO`                    | Boolean | Add leading zero to single-digit hours (Optional. Default: `true`)                                      |
-| `DISPLAY_TIME`                        | Boolean | Display the release time next to events (Optional. Default: `true`)                                     |
-| `START_WEEK_ON_MONDAY`                | Boolean | Use Monday as the start of the week for color rotation (Optional. Default: `true`)                      |
-| `PASSED_EVENT_HANDLING`               | String  | How to handle past events: `DISPLAY`, `HIDE`, `STRIKE` (Optional. Default: `DISPLAY`)                   |
-| `CALENDAR_RANGE`                      | String  | Date range to fetch: `DAY`, `WEEK`, `AUTO` (Optional. Default: `AUTO`)                                  |
-| `DISCORD_MENTION_ROLE_ID`             | String  | *Discord only* Role ID to mention (Format: `123456789012345678`. Numbers only.) (Optional)             |
-| `DISCORD_HIDE_MENTION_INSTRUCTIONS` | Boolean | *Discord only* Hide the instruction text below the role mention (Optional. Default: `false`)            |
-| `DEDUPLICATE_EVENTS`                  | Boolean | Remove duplicate events from multiple sources (Optional. Default: `true`)                               |
-| `HTTP_TIMEOUT`                        | Integer | Timeout in seconds for HTTP requests (Optional. Default: `30`)                                          |
-| `DEBUG`                               | Boolean | Enable debug logging (Optional. Default: `false`)                                                       |
-| `LOG_DIR`                             | String  | Directory to store log files (Optional. Default: `/app/logs`)                                           |
-| `LOG_FILE`                            | String  | Name of the log file (Optional. Default: `calendarr.log`)                                               |
-| `LOG_MAX_SIZE_MB`                     | Integer | Maximum size of a single log file in MB before rotation (Optional. Default: `1`)                        |
-| `LOG_BACKUP_COUNT`                    | Integer | Number of rotated log files to keep (Optional. Default: `15`)                                           |
+| Variable                              | Type    | Default         | Description                                                                                             |
+| :------------------------------------ | :------ | :-------------- | :------------------------------------------------------------------------------------------------------ |
+| `ADD_LEADING_ZERO`                    | Boolean | `true`          | Add leading zero to single-digit hours (Optional)                                                       |
+| `CALENDAR_RANGE`                      | String  | `AUTO`          | Date range to fetch: `DAY`, `WEEK`, `AUTO` (Optional)                                                   |
+| `CALENDAR_URLS` *                     | String  | `[]`            | JSON array of calendar URLs and types (e.g., `[{"url":"http://...","type":"tv"}]`)                       |
+| `CRON_SCHEDULE`                       | String  | `None`          | Custom CRON expression (Overrides `SCHEDULE_TYPE`, `SCHEDULE_DAY`, `RUN_TIME`) (Optional)               |
+| `CUSTOM_HEADER`                       | String  | `New Releases`  | Custom header text (Optional)                                                                           |
+| `DEBUG`                               | Boolean | `false`         | Enable debug logging (Optional)                                                                         |
+| `DEDUPLICATE_EVENTS`                  | Boolean | `true`          | Remove duplicate events from multiple sources (Optional)                                                |
+| `DISCORD_HIDE_MENTION_INSTRUCTIONS` | Boolean | `false`         | *Discord only* Hide the instruction text below the role mention (Optional)                              |
+| `DISCORD_MENTION_ROLE_ID`             | String  | `""`            | *Discord only* Role ID to mention (Format: `123456789012345678`. Numbers only.) (Optional)             |
+| `DISCORD_WEBHOOK_URL` **              | String  | `""`            | Discord webhook URL                                                                                     |
+| `DISPLAY_TIME`                        | Boolean | `true`          | Display the release time next to events (Optional)                                                      |
+| `ENABLE_CUSTOM_DISCORD_FOOTER`        | Boolean | `false`         | Enable custom footer for Discord messages (Optional)                                                    |
+| `ENABLE_CUSTOM_SLACK_FOOTER`          | Boolean | `false`         | Enable custom footer for Slack messages (Optional)                                                      |
+| `HTTP_TIMEOUT`                        | Integer | `30`            | Timeout in seconds for HTTP requests (Optional)                                                         |
+| `LOG_BACKUP_COUNT`                    | Integer | `15`            | Number of rotated log files to keep (Optional)                                                          |
+| `LOG_DIR`                             | String  | `/app/logs`     | Directory to store log files (Optional)                                                                 |
+| `LOG_FILE`                            | String  | `calendarr.log` | Name of the log file (Optional)                                                                         |
+| `LOG_MAX_SIZE_MB`                     | Integer | `1`             | Maximum size of a single log file in MB before rotation (Optional)                                      |
+| `PASSED_EVENT_HANDLING`               | String  | `DISPLAY`       | How to handle past events: `DISPLAY`, `HIDE`, `STRIKE` (Optional)                                       |
+| `RUN_ON_STARTUP`                      | Boolean | `false`         | Run the job immediately when the container starts (Optional)                                            |
+| `RUN_TIME`                            | String  | `09:00`         | Time to run job (HH:MM) (Optional)                                                                      |
+| `SCHEDULE_DAY`                        | String  | `1`             | Day of week for weekly schedule (`0`-`6`, Sunday-Saturday) (Optional. Default: Monday)                  |
+| `SCHEDULE_TYPE`                       | String  | `WEEKLY`        | `DAILY` or `WEEKLY` (Optional)                                                                          |
+| `SHOW_DATE_RANGE`                     | Boolean | `true`          | Show the date range in the header (Optional)                                                            |
+| `SHOW_TIMEZONE_IN_SUBHEADER`          | Boolean | `false`         | Show the configured timezone (Optional)                                                                 |
+| `SLACK_WEBHOOK_URL` ***             | String  | `""`            | Slack webhook URL                                                                                       |
+| `START_WEEK_ON_MONDAY`                | Boolean | `true`          | Use Monday as the start of the week for color rotation (Optional)                                       |
+| `TZ` *                                | String  | `UTC`           | Timezone (e.g., `America/New_York`)                                                                     |
+| `USE_24_HOUR`                         | Boolean | `true`          | Use 24-hour time format (Optional)                                                                      |
+| `USE_DISCORD`                         | Boolean | `true`          | Enable Discord notifications (Optional)                                                                 |
+| `USE_SLACK`                           | Boolean | `false`         | Enable Slack notifications (Optional)                                                                   |
+
+\* Required.
+** Required if `USE_DISCORD` is `true`.
+*** Required if `USE_SLACK` is `true`.
 
 ## Schedule Configuration
 
@@ -99,6 +105,29 @@ Set when and how often the calendar runs:
   - "WEEK": Shows an entire week of events
 
 You can also use `CRON_SCHEDULE` for direct cron expressions (overrides all other schedule settings. Don't use this unless you have a good reason and know what you're doing)
+
+## ✍️ Custom Footers
+
+You can add custom text to the end of your Discord and Slack announcements using Markdown files.
+
+1.  **Enable the Feature:** Set `ENABLE_CUSTOM_DISCORD_FOOTER: true` and/or `ENABLE_CUSTOM_SLACK_FOOTER: true` in your environment variables.
+2.  **Create a Volume Mount:** Add a volume mount in your `docker-compose.yml` to map a local directory (e.g., `./custom_footers`) to `/app/custom_footers` inside the container.
+
+    ```yaml
+    # docker-compose.yml example snippet
+    services:
+      calendarr:
+        # ... other settings ...
+        volumes:
+          - ./logs:/app/logs:rw
+          - ./custom_footers:/app/custom_footers:rw # Add this line
+    ```
+3.  **Edit Footer Files:**
+    *   When you first start the container with the volume mount, Calendarr will automatically copy default template files (`discord_footer.md` and `slack_footer.md`) into your local `./custom_footers` directory (if they don't already exist).
+    *   Edit these files using standard Markdown (for Discord) or Slack's `mrkdwn` (for Slack) to customize your footer.
+    *   HTML comments (`<!-- ... -->`) will be ignored.
+
+If the footer files are missing or cannot be read, the app will log a warning and omit the footer without failing.
 
 ## 🤝 Obtaining Calendar URLs
 
