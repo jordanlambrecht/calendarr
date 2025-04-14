@@ -7,18 +7,14 @@ name: calendarr
 # ╚══════════════════════════════════════╝
 services:
  calendarr:
-    # image: ghcr.io/jordanlambrecht/calendarr:latest
-    build: .
+    image: ghcr.io/jordanlambrecht/calendarr:latest
     restart: "unless-stopped"
     container_name: calendarr
     environment:
-      USE_DISCORD: "true"
-      USE_SLACK: "true"
-      USE_24_HOUR: "true"
-      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
-      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
-      DISPLAY_TIME: "true"
-      # type must be "tv" or "movie"
+      # --- Required ---
+     
+      TZ: ${TZ}
+       # At least one calendar URL is needed
       CALENDAR_URLS: >
         [{
           "url":"${ICS_URL_SONARR_1}",
@@ -32,22 +28,49 @@ services:
           "url":"${ICS_URL_RADARR_1}",
           "type":"movie"
         }]
-      CUSTOM_HEADER: TV Guide - Shows and Movies airing this week
-      SHOW_DATE_RANGE: true
-      DEBUG: false
-      START_WEEK_ON_MONDAY: true
-      TZ: "America/Chicago"
-      DISCORD_MENTION_ROLE_ID: ${DISCORD_MENTION_ROLE_ID}
-      RUN_TIME: "09:30"  # Time in HH:MM format (24-hour)
-      RUN_ON_STARTUP: true
-      SCHEDULE_TYPE: "WEEKLY"  # DAILY or WEEKLY
+      
+      # Required for Discord
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      USE_DISCORD: true
+
+      # Required for Slack
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
+      USE_SLACK: false
+      
+      # --- Kitchen Sink (All are optional - Defaults are usually fine) ---
+      ADD_LEADING_ZERO: true
       CALENDAR_RANGE: "AUTO"   # AUTO, DAY, or WEEK
+      CRON_SCHEDULE: ""        # Example: "0 10 * * 1" (10:00 every Monday) - Overrides SCHEDULE_TYPE/DAY/RUN_TIME
+      CUSTOM_HEADER: "TV Guide - Shows and Movies airing this week"
+      DEBUG: false
+      DEDUPLICATE_EVENTS: true
+      DISCORD_HIDE_MENTION_INSTRUCTIONS: false
+      DISCORD_MENTION_ROLE_ID: ${DISCORD_MENTION_ROLE_ID}
+      DISPLAY_TIME: true
+      ENABLE_CUSTOM_DISCORD_FOOTER: false
+      ENABLE_CUSTOM_SLACK_FOOTER: false
+      HTTP_TIMEOUT: "30"
+      LOG_BACKUP_COUNT: "15"
+      LOG_DIR: "/app/logs"
+      LOG_FILE: "calendarr.log"
+      LOG_MAX_SIZE_MB: "1"
       PASSED_EVENT_HANDLING: "STRIKE"    # DISPLAY, HIDE, or STRIKE
-      DEDUPLICATE_EVENTS: "true" 
-      SHOW_TIMEZONE_IN_SUBHEADER: "true"
+      RUN_ON_STARTUP: true
+      RUN_TIME: "09:30"  # Time in HH:MM format (24-hour)
+      SCHEDULE_DAY: "1"  # 0=Sun, 1=Mon, ..., 6=Sat (Only used if SCHEDULE_TYPE is WEEKLY and CRON_SCHEDULE is not set)
+      SCHEDULE_TYPE: "WEEKLY"  # DAILY or WEEKLY (Only used if CRON_SCHEDULE is not set)
+      SHOW_DATE_RANGE: true
+      SHOW_TIMEZONE_IN_SUBHEADER: true
+      START_WEEK_ON_MONDAY: true
+      USE_24_HOUR: true
+
     volumes:
+      # Mount logs directory (optional but recommended)
       - ./calendarr/logs:/app/logs:rw
-    healthcheck:
+      # Mount custom footers directory (required if ENABLE_CUSTOM_*_FOOTER is true)
+      - ./calendarr/custom_footers:/app/custom_footers:rw
+    
+    healthcheck: # You can delete this if  you don't care about healthchecks
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
       interval: 30s
       timeout: 10s
