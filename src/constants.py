@@ -33,8 +33,9 @@ VALID_EVENT_TYPES = [EVENT_TYPE_TV, EVENT_TYPE_MOVIE]
 # ==============================================
 # User Interface & Formatting
 # ==============================================
-NO_NEW_RELEASES_MSG = "No new releases. Maybe it's a good day to take a walk?"
+NO_NEW_RELEASES_MSG = "No new releases this week. Maybe this is a good time to take a walk? Or call your mom and tell her you love her"
 MENTION_ROLE_ID_MSG = "If you'd like to be notified when new content is available, join this role!"
+NO_CONTENT_TODAY_MSG = "No releases scheduled for this day."
 
 # --- Markdown Styling Constants ---
 # Discord

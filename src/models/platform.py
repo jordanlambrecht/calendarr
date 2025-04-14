@@ -6,17 +6,17 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 from datetime import datetime
 import logging
-import traceback # Ensure traceback is imported
-
+import traceback
 from models.day import Day
 from models.event_item import EventItem
 from config.settings import Config
 from utils.format_utils import (
     format_header_text, format_subheader_text, get_day_colors,
-    format_timezone_line # Import the new function
+    format_timezone_line
 )
 from constants import (
     MENTION_ROLE_ID_MSG,
+    NO_CONTENT_TODAY_MSG,
     PLATFORM_DISCORD,
     PLATFORM_SLACK,
     EPISODE_PATTERN,
@@ -188,12 +188,17 @@ class  DiscordPlatform(Platform):
         description = ""
         if tv_formatted:
             description += "\n".join(tv_formatted)
+            # Add blank line only if both TV and Movies exist
             if movie_formatted:
                 description += "\n\n"
-        
+
         if movie_formatted:
-            description += "**MOVIES**\n" + "\n".join(movie_formatted)
-        
+            # Use Discord bold constants for the header
+            description += f"{DISCORD_BOLD_START}MOVIES{DISCORD_BOLD_END}\n" + "\n".join(movie_formatted)
+
+        # Ensure description is not empty before returning
+        if not description:
+            description = f"{DISCORD_ITALIC_START}{NO_CONTENT_TODAY_MSG}{DISCORD_ITALIC_END}"
         return {
             "title": day.name,
             "description": description,
@@ -210,17 +215,17 @@ class  DiscordPlatform(Platform):
         try:
             # Create header text
             header_text = format_header_text(custom_header, start_date, end_date, show_date_range)
-            logger.debug(f"format_header - header_text: '{header_text}'")
+            logger.debug(f"🖌️  format_header - header_text: '{header_text}'")
 
             # Get subheader text, already bolded for Discord
             subheader = format_subheader_text(tv_count, movie_count, premiere_count, PLATFORM_DISCORD)
-            logger.debug(f"format_header - subheader: '{subheader.strip()}'") 
+            logger.debug(f"🖌️  format_header - subheader: '{subheader.strip()}'") 
 
             # --- Get Timezone Line if needed ---
             timezone_line = ""
             if self.config.show_timezone_in_subheader:
                 timezone_line = format_timezone_line(self.config.timezone_obj, PLATFORM_DISCORD)
-            logger.debug(f"format_header - timezone_line: '{timezone_line}'")
+            logger.debug(f"🖌️  format_header - timezone_line: '{timezone_line}'")
 
             # --- Create Mention Text ---
             mention_text = ""
@@ -230,24 +235,24 @@ class  DiscordPlatform(Platform):
                 mention_text = f"<@&{role_id}>"
                 if not hide_instructions:
                     mention_text += f"\n{ITALIC_START}{MENTION_ROLE_ID_MSG}{ITALIC_END}"
-            logger.debug(f"format_header - mention_text: '{mention_text}'")
+            logger.debug(f"🖌️  format_header - mention_text: '{mention_text}'")
 
             # --- Combine parts ---
-            logger.debug("format_header - Attempting to assemble final_content")
+            logger.debug("🖌️  format_header - Attempting to assemble final_content")
             safe_header = str(header_text) if header_text is not None else ""
             safe_subheader = str(subheader).rstrip() if subheader is not None else "" # Use rstrip here
 
             final_content = f"{safe_header}\n\n{safe_subheader}" # Initial assignment
-            logger.debug("format_header - Assembled base final_content")
+            logger.debug("🖌️  format_header - Assembled base final_content")
 
             if timezone_line:
                 final_content += f"\n\n{str(timezone_line)}"
-                logger.debug("format_header - Added timezone_line to final_content")
+                logger.debug("🖌️  format_header - Added timezone_line to final_content")
             if mention_text:
                 final_content += f"\n\n{str(mention_text)}"
-                logger.debug("format_header - Added mention_text to final_content")
+                logger.debug("🖌️  format_header - Added mention_text to final_content")
 
-            logger.debug("format_header - Successfully assembled final_content")
+            logger.debug("🖌️  format_header - Successfully assembled final_content")
 
         except Exception as e:
              logger.error(f"☠️ Error during Discord content assembly in format_header: {e}")
@@ -255,12 +260,12 @@ class  DiscordPlatform(Platform):
              # Fallback: Try returning at least the header text if assembly fails
              try:
                  final_content = str(header_text) if header_text is not None else "Error generating message content."
-                 logger.debug("format_header - Assigned fallback content after error")
+                 logger.debug("🖌️  format_header - Assigned fallback content after error")
              except Exception as fallback_e:
                  logger.error(f"☠️ Error assigning fallback content in format_header: {fallback_e}")
                  final_content = "Error generating message content." # Absolute fallback
 
-        logger.debug(f"format_header - Returning final_content:\n'''\n{final_content}\n'''")
+        logger.debug(f"🖌️  format_header - Returning final_content:\n'''\n{final_content}\n'''")
         return {
             "content": final_content
         }
@@ -307,10 +312,9 @@ class  DiscordPlatform(Platform):
     
     def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """Format a movie event for Discord"""
-        time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
         movie_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
 
-        formatted = f"{time_prefix}{DISCORD_BOLD_START}{movie_name_to_format}{DISCORD_BOLD_END}"
+        formatted = f"🎬 {DISCORD_BOLD_START}{movie_name_to_format}{DISCORD_BOLD_END}"
 
         if event_item.is_past and passed_event_handling == "STRIKE":
             formatted = f"{DISCORD_STRIKE_START}{formatted}{DISCORD_STRIKE_END}"
@@ -364,12 +368,18 @@ class SlackPlatform(Platform):
         text = ""
         if tv_formatted:
             text += "\n".join(tv_formatted)
+            # Add blank line only if both TV and Movies exist
             if movie_formatted:
                 text += "\n\n"
-        
+
         if movie_formatted:
-            text += "*MOVIES*\n" + "\n".join(movie_formatted)
-        
+            # Use Slack bold constants for the header
+            text += f"{SLACK_BOLD_START}MOVIES{SLACK_BOLD_END}\n" + "\n".join(movie_formatted)
+
+        # Ensure text is not empty before returning
+        if not text:
+            text = "_No releases scheduled for this day._" # Or some placeholder
+
         return {
             "color": color,
             "title": day.name,
@@ -480,9 +490,8 @@ class SlackPlatform(Platform):
     
     def format_movie_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """Format a movie event for Slack"""
-        time_prefix = f"{event_item.time_str}: " if event_item.time_str else ""
         movie_name_to_format = event_item.show_name if event_item.show_name else event_item.summary
-        formatted = f"{time_prefix}{SLACK_BOLD_START}{movie_name_to_format}{SLACK_BOLD_END}"
+        formatted = f"🎬 {SLACK_BOLD_START}{movie_name_to_format}{SLACK_BOLD_END}"
 
         if event_item.is_past and passed_event_handling == "STRIKE":
             formatted = f"{SLACK_STRIKE_START}{formatted}{SLACK_STRIKE_END}"
