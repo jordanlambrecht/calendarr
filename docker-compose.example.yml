@@ -1,13 +1,14 @@
 ---
 name: calendarr
+# ‼️ RENAME THIS FILE TO docker-compose.yml SHOULD YOU WISH TO USE IT
 
 # ╔══════════════════════════════════════╗
 # ║               SERVICES               ║
 # ╚══════════════════════════════════════╝
 services:
  calendarr:
-    image: ghcr.io/jordanlambrecht/calendarr:latest
-    # build: .
+    # image: ghcr.io/jordanlambrecht/calendarr:latest
+    build: .
     restart: "unless-stopped"
     container_name: calendarr
     environment:
@@ -36,13 +37,14 @@ services:
       DEBUG: false
       START_WEEK_ON_MONDAY: true
       TZ: "America/Chicago"
-      DISCORD_MENTION_ROLE_ID: ${MENTION_ROLE_ID}
+      DISCORD_MENTION_ROLE_ID: ${DISCORD_MENTION_ROLE_ID}
       RUN_TIME: "09:30"  # Time in HH:MM format (24-hour)
       RUN_ON_STARTUP: true
       SCHEDULE_TYPE: "WEEKLY"  # DAILY or WEEKLY
       CALENDAR_RANGE: "AUTO"   # AUTO, DAY, or WEEK
       PASSED_EVENT_HANDLING: "STRIKE"    # DISPLAY, HIDE, or STRIKE
       DEDUPLICATE_EVENTS: "true" 
+      SHOW_TIMEZONE_IN_SUBHEADER: "true"
     volumes:
       - ./calendarr/logs:/app/logs:rw
     healthcheck:
