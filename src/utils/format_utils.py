@@ -155,26 +155,26 @@ def format_subheader_text(tv_count: int, movie_count: int, premiere_count: int, 
     # Add TV shows count
     if tv_count > 0:
         shows_text = pluralize("episode", tv_count)
-        subheader_parts.append(f"📺 {tv_count} all-new {shows_text}") # Use 📺
+        subheader_parts.append(f"{bold_start} 📺  {tv_count} all-new {shows_text}{bold_end}")
 
     # Add movies if any
     if movie_count > 0:
         movies_text = pluralize("movie release", movie_count)
-        subheader_parts.append(f"🎬 {movie_count} {movies_text}") # Use 🎬
+        subheader_parts.append(f"{bold_start} 🎬  {movie_count} {movies_text}{bold_end}")
 
     # Add premieres if any
     if premiere_count > 0:
         premiere_text = pluralize("premiere", premiere_count)
-        subheader_parts.append(f"🎉 {premiere_count} season {premiere_text}") # Use 🎉
+        subheader_parts.append(f"{bold_start} 🎉  {premiere_count} season {premiere_text}{bold_end}")
 
-    # Join with appropriate separators
+    # Join with appropriate separators (UNBOLDED)
     if len(subheader_parts) == 1:
-        subheader = f"{bold_start}{subheader_parts[0]}{bold_end}"
+        subheader = subheader_parts[0]
     elif len(subheader_parts) == 2:
-        subheader = f"{bold_start}{subheader_parts[0]} and {subheader_parts[1]}{bold_end}"
+        subheader = f"{subheader_parts[0]} and {subheader_parts[1]}"
     else:
-        # Join all but last with commas, then add the last with "and"
-        subheader = f"{bold_start}{', '.join(subheader_parts[:-1])}, and {subheader_parts[-1]}{bold_end}"
+        # d the last with "and"
+        subheader = f"{', '.join(subheader_parts[:-1])}, and {subheader_parts[-1]}"
 
     return subheader + "\n\n"  # Add line break
 
@@ -205,14 +205,11 @@ def get_day_colors(platform: str, start_week_on_monday: bool = True) -> Dict:
 
 def format_timezone_line(timezone_obj: Optional[pytz.BaseTzInfo], platform: str) -> str:
     """
-    Formats the timezone information line, using custom names or abbreviations.
+    Formats the timezone information line, usi[g custom names or abbreviations.
 
     Args:
-        timezone_obj: The pytz timezone object from the config.
-        platform: The target platform ('discord' or 'slack').
-
-    Returns:
-        Formatted timezone line (e.g., "_All times shown in Central Time_") or empty string.
+        timezone_obj: The pytz timezone oom t[    he config.
+        platformoomt platt[    hem ('discord'platformoomteturnsplatt[    hem  Formatted timezonplatformoomteturnsplatt[    hem  own in Central Time_") or empty string.
     """
     if not timezone_obj:
         logger.warning("‼️  No timezone object provided to format_timezone_line.")

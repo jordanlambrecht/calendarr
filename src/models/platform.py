@@ -249,7 +249,7 @@ class  DiscordPlatform(Platform):
             safe_header = str(header_text) if header_text is not None else ""
             safe_subheader = str(subheader).rstrip() if subheader is not None else "" # Use rstrip here
 
-            final_content = f"{safe_header}\n\n{safe_subheader}" # Initial assignment
+            final_content = f"# {safe_header}\n\n{safe_subheader}"
             logger.debug("🖌️  format_header - Assembled base final_content")
 
             if timezone_line:
@@ -311,7 +311,7 @@ class  DiscordPlatform(Platform):
 
         formatted = f"{time_prefix}{formatted_show}{episode_details}"
         if event_item.is_premiere:
-            formatted += " 🎉"
+            formatted += "  🎉"
         if event_item.is_past and passed_event_handling == "STRIKE":
             formatted = f"{DISCORD_STRIKE_START}{formatted}{DISCORD_STRIKE_END}"
 
@@ -489,7 +489,7 @@ class SlackPlatform(Platform):
 
         formatted = f"{time_prefix}{formatted_show}{episode_details}"
         if event_item.is_premiere:
-            formatted += " 🎉"
+            formatted += "  "
         if event_item.is_past and passed_event_handling == "STRIKE":
             formatted = f"{SLACK_STRIKE_START}{formatted}{SLACK_STRIKE_END}"
 
