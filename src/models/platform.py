@@ -16,6 +16,7 @@ from utils.format_utils import (
     format_timezone_line # Import the new function
 )
 from constants import (
+    MENTION_ROLE_ID_MSG,
     PLATFORM_DISCORD,
     PLATFORM_SLACK,
     EPISODE_PATTERN,
@@ -228,7 +229,7 @@ class  DiscordPlatform(Platform):
             if role_id:
                 mention_text = f"<@&{role_id}>"
                 if not hide_instructions:
-                    mention_text += f"\n{ITALIC_START}If you'd like to be notified...{ITALIC_END}"
+                    mention_text += f"\n{ITALIC_START}{MENTION_ROLE_ID_MSG}{ITALIC_END}"
             logger.debug(f"format_header - mention_text: '{mention_text}'")
 
             # --- Combine parts ---
@@ -376,7 +377,7 @@ class SlackPlatform(Platform):
             "mrkdwn_in": ["text"]
         }
     
-    def format_header(self, custom_header: str, start_date: datetime, 
+    def format_header(self, custom_header: str, start_date: datetime,
                      end_date: datetime, show_date_range: bool,
                      tv_count: int, movie_count: int, premiere_count: int) -> Dict[str, Any]:
         """
@@ -396,33 +397,54 @@ class SlackPlatform(Platform):
         """
         # Create header text and date range text
         header_text = format_header_text(custom_header, start_date, end_date, show_date_range)
-        date_range_text = "" # Slack doesn't use the date range in the main text block
 
         # Create subheader text (without timezone)
-        subheader_text = format_subheader_text(tv_count, movie_count, premiere_count, PLATFORM_SLACK).strip() # Remove trailing newlines
+        subheader_text = format_subheader_text(tv_count, movie_count, premiere_count, PLATFORM_SLACK).strip()
 
-        #Get timezone line if needed
+        # Get timezone line if needed
         timezone_line = ""
         if self.config.show_timezone_in_subheader:
-            # Call the utility function
             timezone_line = format_timezone_line(self.config.timezone_obj, PLATFORM_SLACK)
 
-        # Combine parts for the main text block
-        message_text = f"{header_text}\n\n{subheader_text}{timezone_line}"
+        # Combine subheader and timezone for the section block's text
+        section_block_text = ""
+        if subheader_text and timezone_line:
+            # Both exist, add newline between them
+            section_block_text = f"{subheader_text}\n\n{timezone_line}"
+        elif subheader_text:
+            # Only subheader exists
+            section_block_text = subheader_text
+        elif timezone_line:
+            # Only timezone exists (not super likely, but handle)
+            section_block_text = timezone_line
+        # If both are empty, section_block_text remains ""
 
-        # Return Slack block payload
-        return {
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": message_text
-                    }
+        # --- Assemble Blocks ---
+        blocks = []
+
+        # Add Header Block
+        blocks.append({
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": header_text
+            }
+        })
+
+        # Add Section Block only if it has content
+        if section_block_text:
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": section_block_text
                 }
-            ]
+            })
+
+        return {
+            "blocks": blocks
         }
-    
+
     def format_tv_event(self, event_item: EventItem, passed_event_handling: str) -> str:
         """
         Format a TV event for Slack, applying italics based on content.

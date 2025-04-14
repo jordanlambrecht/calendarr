@@ -115,7 +115,7 @@ def format_header_text(custom_header: str, start_date, end_date,
     Returns:
         Formatted header text
     """
-    header_text = f"# {custom_header}"
+    header_text = f"{custom_header}"
     
     if show_date_range:
         # Check if we're in daily mode (start and end date are the same day)
