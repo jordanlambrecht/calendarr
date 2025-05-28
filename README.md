@@ -240,6 +240,8 @@ Features I'd like to maybe implement:
 
 ## 🚧 Development
 
+Roadmap: https://github.com/users/jordanlambrecht/projects/3
+
 If you want to build the container yourself:
 
 ```bash
