@@ -16,7 +16,7 @@ body:
   - type: checkboxes
     id: platforms-impacted
     attributes:
-      label: Platform Impacted:
+      label: Platform Impacted
       options:
         - label: Slack
         - label: Discord
