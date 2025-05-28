@@ -1,0 +1,11 @@
+# https://github.com/marketplace/actions/github-issue-labeler
+
+- bug:
+    - bug
+    - weird
+- feature\\-request:
+    - feature\\
+    - improvement
+    - idea
+    - suggestion
+    - request
