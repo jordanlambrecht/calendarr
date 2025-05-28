@@ -1,0 +1,19 @@
+name: "Issue Labeler"
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: MaximilianAnzinger/issue-labeler@1.0.2 # Use the latest version
+      with:
+        configuration-path: .github/issue-labeler.yml
+        repo-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+        include-title: 1 // Default is 1
+        include-body: 1 // Default is 1
