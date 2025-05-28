@@ -3,9 +3,11 @@
 - bug:
     - bug
     - weird
+    - caseSensitive: false
 - feature\\-request:
     - feature\\
     - improvement
     - idea
     - suggestion
     - request
+    - caseSensitive: false
