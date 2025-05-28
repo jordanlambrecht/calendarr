@@ -11,9 +11,9 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: MaximilianAnzinger/issue-labeler@1.0.2 # Use the latest version
+    - uses: MaximilianAnzinger/issue-labeler@1.0.2
       with:
         configuration-path: .github/issue-labeler.yml
         repo-token: ${{ secrets.GH_TOKEN }}
-        include-title: 1 // Default is 1
-        include-body: 1 // Default is 1
+        include-title: 1
+        include-body: 1
