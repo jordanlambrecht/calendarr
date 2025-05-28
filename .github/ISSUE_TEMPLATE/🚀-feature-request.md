@@ -1,9 +1,9 @@
 ---
 name: "\U0001F680 Feature Request"
 about: Suggest an idea for this project
-title: "[Feature Request]:"
+title: "\U0001F680 :"
 labels: feature-request
-assignees: ''
+assignees: jordanlambrecht
 
 ---
 

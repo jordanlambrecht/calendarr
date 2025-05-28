@@ -1,7 +1,7 @@
 ---
 name: "❓ Question / Other"
 about: Waddup?
-title: "[QUESTION]:"
+title: "❓ :"
 labels: question
 assignees: ''
 

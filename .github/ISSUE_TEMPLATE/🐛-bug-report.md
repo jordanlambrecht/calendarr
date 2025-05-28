@@ -1,23 +1,27 @@
 ---
 name: "\U0001F41B Bug report"
 about: Create a report to help us improve
-title: "[BUG]:"
+title: "\U0001F41B :"
 labels: bug
 assignees: ''
 
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+_A clear and concise description of what the bug is._
+
 
 **Platform Impacted**
-Discord vs. Slack
+- [ ] Slack
+- [ ] Discord
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
+_If applicable, add screenshots to help explain your problem._
 
-**Additional context**
-Add any other context about the problem here.
 
 **Log Files**
-Enable debug in the compose file before copy/pasting log files. Please be sure to redact any sensitive information.
+_Enable debug in the compose file before copy/pasting log files. Please be sure to redact any sensitive information._
+
+```
+copy paste logs here
+```
