@@ -1,13 +1,14 @@
-# https://github.com/marketplace/actions/github-issue-labeler
-
-- bug:
-    - bug
-    - weird
-    - caseSensitive: false
-- feature\\-request:
-    - feature\\
-    - improvement
-    - idea
-    - suggestion
-    - request
-    - caseSensitive: false
+labels:
+  bug:
+    keywords:
+      - bug
+      - weird
+    caseSensitive: false
+  feature-request:
+    keywords:
+      - feature
+      - improvement
+      - idea
+      - suggestion
+      - request
+    caseSensitive: false
