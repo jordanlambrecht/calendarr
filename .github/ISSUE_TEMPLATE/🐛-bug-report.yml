@@ -5,8 +5,6 @@ title: "\U0001F41B :"
 labels: [bug]
 # assignees: ''
 projects: ["jordanlambrecht/calendarr/3"]
----
-
 body:
   - type: textarea
     attributes:
