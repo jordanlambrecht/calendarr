@@ -1,14 +1,8 @@
-labels:
-  bug:
-    keywords:
-      - bug
-      - weird
-    caseSensitive: false
-  feature-request:
-    keywords:
-      - feature
-      - improvement
-      - idea
-      - suggestion
-      - request
-    caseSensitive: false
+- bug:
+    - bug
+    - weird
+    - caseSensitive: false
+- enhancement:
+    - enhancement
+    - improvement
+    - caseSensitive: false
