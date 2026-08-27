@@ -11,3 +11,6 @@ __pycache__
 .venv/**
 !.env.example
 docker-compose.yml
+.omc/
+.pytest_cache/
+.ruff_cache/
