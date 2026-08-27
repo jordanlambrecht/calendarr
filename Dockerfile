@@ -9,25 +9,25 @@ LABEL org.opencontainers.image.licenses=GPL-3.0
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application source code
 COPY src/ /app/src/
 
-# Copy the default custom footer templates to a SEPARATE location
+# Default custom footer templates live in a separate location so the
+# entrypoint can seed a mounted volume on first run
 COPY ./calendarr/custom_footers /app/default_footers/
 
-# Copy and set up the entrypoint script
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Create logs directory
 RUN mkdir -p /app/logs
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
 
 EXPOSE 5000
 
-# Set the entrypoint script
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Set the default command (will be executed by entrypoint's exec "$@")
-CMD ["python", "src/app.py"]
+CMD ["python", "-m", "calendarr"]

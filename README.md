@@ -53,7 +53,7 @@ docker run -d \
 ### To Run Offschedule 
 
 1. Start the container via the compose file with `docker compose up -d`
-2. Use the command `docker exec calandarr python /app/main.py` as willy nilly as you wish
+2. Use the command `docker exec calendarr python -m calendarr run` as willy nilly as you wish
 
 
 ## 🛠️ Configuration
@@ -81,7 +81,7 @@ docker run -d \
 | `PASSED_EVENT_HANDLING`               | String  | `DISPLAY`       | How to handle past events: `DISPLAY`, `HIDE`, `STRIKE` (Optional)                                       |
 | `RUN_ON_STARTUP`                      | Boolean | `false`         | Run the job immediately when the container starts (Optional)                                            |
 | `RUN_TIME`                            | String  | `09:00`         | Time to run job (HH:MM) (Optional)                                                                      |
-| `SCHEDULE_DAY`                        | String  | `1`             | Day of week for weekly schedule (`0`-`6`, Sunday-Saturday) (Optional. Default: Monday)                  |
+| `SCHEDULE_DAY`                        | String  | `1`             | Day of week for weekly schedule, `0`-`6` (Sunday-Saturday) or day names like `MON` (Optional. Default: Monday) |
 | `SCHEDULE_TYPE`                       | String  | `WEEKLY`        | `DAILY` or `WEEKLY` (Optional)                                                                          |
 | `SHOW_DATE_RANGE`                     | Boolean | `true`          | Show the date range in the header (Optional)                                                            |
 | `SHOW_TIMEZONE_IN_SUBHEADER`          | Boolean | `false`         | Show the configured timezone (Optional)                                                                 |

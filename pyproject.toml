@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "calendarr"
-version = "1.5.1"
+version = "2.0.0"
 description = "A Docker container that fetches upcoming airings/releases for TV shows and movies from Sonarr and Radarr calendars and posts them to Discord/Slack on a schedule."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -29,9 +29,7 @@ classifiers = [
 
 dependencies = [
     "apscheduler",
-    "flask",
     "icalendar",
-    "pytz",
     "recurring-ical-events",
     "requests",
 ]

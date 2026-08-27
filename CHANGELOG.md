@@ -3,7 +3,28 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0]
+
+### Fixed
+- `SCHEDULE_DAY` now matches its documentation, `0`=Sunday through `6`=Saturday. It previously followed APScheduler's Monday-first numbering, so the default of `1` posted on Tuesday instead of Monday (#11)
+- Fetch or parse failures no longer produce a false "No new releases" post. When every feed fails the post is skipped entirely, and when some fail the message notes which source was unreachable
+- Custom Slack footers were sent with an invalid block type and never rendered
+- Slack messages were missing the premiere marker that Discord messages had
+- The Discord header could be duplicated when a post spanned multiple embed batches
+- Header counts now match the message body when duplicate events are removed
+- The documented `LOG_MAX_SIZE_MB` variable is now honored (previously only the undocumented `MAX_LOG_SIZE` worked)
+- Very busy days now split across continuation embeds instead of exceeding Discord's embed limits
+
+### Changed
+- Full internal restructure into a `calendarr` package with a pure report pipeline, a pytest suite, and CI running tests and lint on every PR
+- The scheduler now receives the configured timezone explicitly, tolerates up to an hour of start delay instead of APScheduler's one second default, and catches up after container downtime using a last run marker
+- Discord rate limits are honored via `Retry-After` with a bounded retry budget
+- `/health` now reports scheduler state and the last run outcome instead of a static reply
+- The weekly header range now shows the last included day rather than the following week's first day
+- `SCHEDULE_DAY` also accepts day names such as `MON` or `Sunday`
+- One-shot runs use `docker exec calendarr python -m calendarr run`
+- Dependencies are pinned and current. Flask and pytz were removed (stdlib http.server and zoneinfo replace them), and the stray `datetime` PyPI package is gone
+- Docker image rebuilds now trigger only on source changes, not README edits
 
 ## [1.5.0] 2025-04-15
 

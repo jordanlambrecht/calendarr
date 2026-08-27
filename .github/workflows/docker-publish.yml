@@ -6,6 +6,12 @@ on:
   push:
     branches: [ main, master ]
     tags: [ 'v*' ]
+    paths:
+      - 'src/**'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - 'entrypoint.sh'
+      - 'calendarr/**'
   workflow_dispatch:
   
 jobs:

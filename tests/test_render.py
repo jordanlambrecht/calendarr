@@ -1,98 +1,158 @@
 # tests/test_render.py
-"""Platform specific message formatting."""
+"""Payload rendering for Discord and Slack."""
 
-import pytest
+from datetime import date
 
-from config.settings import Config
-from conftest import aware
-from models.day import Day
-from models.event_item import EventItem
-from models.platform import DiscordPlatform, SlackPlatform
-from services.webhook_service import WebhookService
-from utils.format_utils import format_header_text, format_subheader_text, get_day_colors
+from calendarr.config import EventType, PastEventHandling
+from calendarr.domain import DayReport, EventLine, Report, SourceError
+from calendarr.render import (
+    DISCORD_STYLE,
+    SLACK_STYLE,
+    compose_movie_line,
+    compose_tv_line,
+    day_body,
+    discord_payloads,
+    header_text,
+    slack_payloads,
+    source_warning_text,
+    subheader_text,
+)
+from conftest import aware, mk_config, tv_source
 
 
-def discord(config=None) -> DiscordPlatform:
-    return DiscordPlatform("https://example.invalid/hook", WebhookService(30), [200, 204], config or Config())
-
-
-def slack(config=None) -> SlackPlatform:
-    return SlackPlatform("https://example.invalid/hook", WebhookService(30), [200, 201, 204], config or Config())
-
-
-def tv_item(**kw) -> EventItem:
+def tv_line(**kw) -> EventLine:
     base = dict(
         summary="Show - S01E05 - Title",
-        source_type="tv",
+        source_type=EventType.TV,
         show_name="Show",
         episode_number="S01E05",
         episode_title="Title",
         time_str="20:00",
     )
     base.update(kw)
-    return EventItem(**base)
+    return EventLine(**base)
 
 
-class TestDiscordFormatting:
-    def test_tv_event_line(self):
-        line = discord().format_tv_event(tv_item(), "DISPLAY")
+def one_day_report(days=None, **kw) -> Report:
+    if days is None:
+        days = [DayReport(date=date(2026, 8, 24), tv=[tv_line()])]
+    base = dict(
+        days=days,
+        start=aware(2026, 8, 24),
+        end=aware(2026, 8, 31),
+        tv_count=sum(len(d.tv) for d in days),
+        movie_count=sum(len(d.movies) for d in days),
+    )
+    base.update(kw)
+    return Report(**base)
+
+
+class TestLineComposition:
+    def test_discord_tv_line(self):
+        line = compose_tv_line(tv_line(), DISCORD_STYLE, PastEventHandling.DISPLAY)
         assert line == "20:00: **Show** - S01E05 - *Title*"
 
-    def test_premiere_marker(self):
-        line = discord().format_tv_event(tv_item(is_premiere=True), "DISPLAY")
-        assert "🎉" in line
+    def test_slack_tv_line(self):
+        line = compose_tv_line(tv_line(), SLACK_STYLE, PastEventHandling.DISPLAY)
+        assert line == "20:00: *Show* - S01E05 - _Title_"
 
-    def test_strike_for_past(self):
-        line = discord().format_tv_event(tv_item(is_past=True), "STRIKE")
+    def test_premiere_marker_parity(self):
+        # Was register defect 13, Slack lost its premiere marker
+        for style in (DISCORD_STYLE, SLACK_STYLE):
+            plain = compose_tv_line(tv_line(), style, PastEventHandling.DISPLAY)
+            premiere = compose_tv_line(tv_line(is_premiere=True), style, PastEventHandling.DISPLAY)
+            assert premiere != plain
+            assert "🎉" in premiere
+
+    def test_strike_past(self):
+        line = compose_tv_line(tv_line(is_past=True), DISCORD_STYLE, PastEventHandling.STRIKE)
         assert line.startswith("~~") and line.endswith("~~")
 
     def test_movie_line(self):
-        item = EventItem(summary="Big Movie", source_type="movie", show_name="Big Movie")
-        assert discord().format_movie_event(item, "DISPLAY") == "🎬  **Big Movie**"
+        line = EventLine(summary="Big Movie", source_type=EventType.MOVIE, show_name="Big Movie")
+        assert compose_movie_line(line, DISCORD_STYLE, PastEventHandling.DISPLAY) == "🎬  **Big Movie**"
 
-    def test_day_embed_shape(self):
-        day = Day(name="Monday, Aug 24", date=aware(2026, 8, 24).date(), tv_events=[tv_item()], movie_events=[])
-        embed = discord().format_day(day)
-        assert embed["title"] == "Monday, Aug 24"
-        assert "**Show**" in embed["description"]
-        assert embed["color"] == 15158332
-
-    def test_header_contains_counts(self):
-        payload = discord().format_header("New Releases", aware(2026, 8, 24), aware(2026, 8, 31), True, 3, 2, 1)
-        content = payload["content"]
-        assert content.startswith("# New Releases")
-        assert "3 all-new episodes" in content
-        assert "2 movie releases" in content
+    def test_empty_day_placeholder(self):
+        body = day_body(DayReport(date=date(2026, 8, 24)), DISCORD_STYLE, PastEventHandling.DISPLAY)
+        assert "No releases scheduled" in body
 
 
-class TestSlackFormatting:
-    def test_day_attachment_shape(self):
-        day = Day(name="Monday, Aug 24", date=aware(2026, 8, 24).date(), tv_events=[tv_item()], movie_events=[])
-        att = slack().format_day(day)
-        assert att["title"] == "Monday, Aug 24"
-        assert att["color"] == "#E53935"
-        assert "*Show*" in att["text"]
-
-    def test_header_blocks(self):
-        payload = slack().format_header("New Releases", aware(2026, 8, 24), aware(2026, 8, 31), True, 3, 0, 0)
-        assert payload["blocks"][0]["type"] == "header"
-
-    @pytest.mark.xfail(reason="defect 13, Slack premiere marker was lost", strict=True)
-    def test_premiere_marker_parity(self):
-        plain = slack().format_tv_event(tv_item(), "DISPLAY")
-        premiere = slack().format_tv_event(tv_item(is_premiere=True), "DISPLAY")
-        assert premiere != plain
-
-
-class TestHeaderHelpers:
-    def test_weekly_range_text(self):
-        text = format_header_text("Guide", aware(2026, 8, 24), aware(2026, 8, 31), True)
-        assert text == "Guide (Aug 24 - Aug 31)"
+class TestHeaders:
+    def test_weekly_range_shows_inclusive_last_day(self):
+        text = header_text(one_day_report(), mk_config(custom_header="Guide"))
+        assert text == "Guide (Aug 24 - Aug 30)"
 
     def test_zero_events_message(self):
-        text = format_subheader_text(0, 0, 0, "discord")
-        assert "No new releases" in text
+        report = one_day_report(days=[], tv_count=0, movie_count=0)
+        assert "No new releases" in subheader_text(report, DISCORD_STYLE)
 
-    def test_day_colors_rotate_from_week_start(self):
-        colors = get_day_colors("discord", start_week_on_monday=False)
-        assert colors["Sunday"] == 15158332
+    def test_counts(self):
+        report = one_day_report(tv_count=3, movie_count=1, premiere_count=1)
+        text = subheader_text(report, DISCORD_STYLE)
+        assert "3 all-new episodes" in text
+        assert "1 movie release" in text
+        assert "1 season premiere" in text
+
+    def test_source_warning_hides_apikey(self):
+        errors = [SourceError(source=tv_source("http://sonarr.local:8989/feed.ics?apikey=SECRET"), error="x")]
+        report = one_day_report(source_errors=errors)
+        warning = source_warning_text(report, DISCORD_STYLE)
+        assert "sonarr.local:8989" in warning
+        assert "SECRET" not in warning
+
+
+class TestDiscordPayloads:
+    def test_header_sent_exactly_once(self):
+        # Was register defect 4, header duplicated across batches
+        days = [DayReport(date=date(2026, 8, 24), tv=[tv_line()]) for _ in range(12)]
+        payloads = discord_payloads(one_day_report(days=days), mk_config())
+        content_payloads = [p for p in payloads if "content" in p]
+        assert len(content_payloads) == 1
+
+    def test_max_ten_embeds_per_payload(self):
+        days = [DayReport(date=date(2026, 8, 24), tv=[tv_line()]) for _ in range(12)]
+        payloads = discord_payloads(one_day_report(days=days), mk_config())
+        for p in payloads:
+            if "embeds" in p:
+                assert len(p["embeds"]) <= 10
+
+    def test_long_day_splits_into_continuation_embeds(self):
+        lines = [tv_line(episode_title="X" * 200, summary=f"Show {i}") for i in range(30)]
+        days = [DayReport(date=date(2026, 8, 24), tv=lines)]
+        payloads = discord_payloads(one_day_report(days=days), mk_config())
+        embeds = [e for p in payloads if "embeds" in p for e in p["embeds"]]
+        assert len(embeds) > 1
+        assert any("(cont.)" in e["title"] for e in embeds)
+        assert all(len(e["description"]) <= 4096 for e in embeds)
+
+    def test_single_oversize_line_hard_sliced(self):
+        lines = [tv_line(episode_title="X" * 6000)]
+        days = [DayReport(date=date(2026, 8, 24), tv=lines)]
+        payloads = discord_payloads(one_day_report(days=days), mk_config())
+        embeds = [e for p in payloads if "embeds" in p for e in p["embeds"]]
+        assert all(len(e["description"]) <= 4096 for e in embeds)
+
+    def test_mention_role_included(self):
+        cfg = mk_config(discord_mention_role_id="1234")
+        payloads = discord_payloads(one_day_report(), cfg)
+        assert "<@&1234>" in payloads[0]["content"]
+
+    def test_footer_is_separate_final_payload(self):
+        payloads = discord_payloads(one_day_report(), mk_config(), footer="my footer")
+        assert payloads[-1] == {"content": "my footer"}
+
+
+class TestSlackPayloads:
+    def test_main_payload_shape(self):
+        payloads = slack_payloads(one_day_report(), mk_config())
+        main = payloads[0]
+        assert main["blocks"][0]["type"] == "header"
+        assert main["attachments"][0]["title"] == "Monday, Aug 24"
+        assert main["attachments"][0]["color"] == "#E53935"
+
+    def test_footer_uses_context_block(self):
+        # Was register defect 5, invalid block type broke Slack footers
+        payloads = slack_payloads(one_day_report(), mk_config(), footer="hi")
+        footer_block = payloads[-1]["blocks"][0]
+        assert footer_block["type"] == "context"
+        assert footer_block["elements"][0]["text"] == "hi"
