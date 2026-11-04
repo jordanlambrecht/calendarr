@@ -149,6 +149,17 @@ Alternatively:
 3. Copy the API key
 4. Your calendar URL will be: `http://your-sonarr-url/feed/v3/calendar/Sonarr.ics?apikey=YOUR_API_KEY`
 
+### Sportarr
+
+[Sportarr](https://github.com/Sportarr/Sportarr) (sports events) publishes
+an iCal feed that works here as a `tv` type calendar:
+
+1. Go to Settings > General
+2. Copy the API key
+3. Your calendar URL will be: `http://your-sportarr-url:1867/api/calendar.ics?apikey=YOUR_API_KEY`
+4. Optional query parameters: `futureDays`, `pastDays`, `leagueId` (limit to
+   one league), and `asAllDay=true` for all-day style entries
+
 ### Radarr
 
 1. Go to Calendar > iCal Link
