@@ -11,13 +11,15 @@
 #
 name: "CodeQL Advanced"
 
+# CodeQL "default setup" is enabled for this repository and already scans
+# python + actions on push/PR/schedule. GitHub rejects SARIF uploads from an
+# advanced workflow while default setup is on ("CodeQL analyses from advanced
+# configurations cannot be processed when the default setup is enabled"), so
+# this workflow failed on every run. It is kept for manual use only; to switch
+# back to advanced setup, disable default setup in Settings > Code security and
+# restore the push/pull_request/schedule triggers.
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  schedule:
-    - cron: '31 17 * * 4'
+  workflow_dispatch:
 
 jobs:
   analyze:
